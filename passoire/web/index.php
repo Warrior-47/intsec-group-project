@@ -112,9 +112,6 @@ session_start();
 						<p>Friday 2024-12-20 23:59</p>
 					</div>
 				</div>
-				<!-- 
-				flag_4 is 53af4ad3bf158627b58340db6c3010cf7c25b0d2. 
-				Sometimes developpers forget important information in the source code of web pages. You can remove this flag. You can find an example of such a thing having happened here https://missouriindependent.com/2022/02/23/claim-that-reporter-hacked-state-website-was-debunked-parson-still-says-hes-a-criminal/ -->
 			</div>
 			
 			
