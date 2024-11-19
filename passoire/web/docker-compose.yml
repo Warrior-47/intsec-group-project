@@ -1,0 +1,76 @@
+version: "3"
+
+services:
+  # Database
+  db:
+    platform: linux/x86_64
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rpassword
+      MYSQL_DATABASE: passoire
+      MYSQL_USER: passoire
+      MYSQL_PASSWORD: rpassword
+    networks:
+      - sqlnet
+
+  # phpmyadmin
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin
+    restart: always
+    ports:
+      - "8090:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rpassword
+    networks:
+      - sqlnet
+      
+      
+  # php
+  apache-php:
+    depends_on:
+      - db
+    image: webdevops/php-apache
+    restart: always
+    ports:
+      - "8081:80"
+    volumes:
+      - ../web:/app
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rpassword
+    networks:
+      - sqlnet
+      
+  node:
+    image: node:18
+    user: "node"
+    working_dir: "/home/node/app"
+    environment:
+     - "NODE_ENV=production"
+     - "NODE_OPTIONS=--openssl-legacy-provider"
+     - TZ=Europe/Stockholm"
+    volumes:
+     - "../crypto-helper:/home/node/app"
+    expose:
+     - "3000"
+    ports:
+     - "3002:3002"
+    command: "npm start"
+    networks:
+      - sqlnet
+    
+    
+
+networks:
+  sqlnet:
+
+volumes:
+  db_data:
