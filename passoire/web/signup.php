@@ -4,7 +4,8 @@ include 'db_connect.php';
 
 // Function to hash passwords
 function hashPassword($password) {
-    return sha1($password);
+    $sha1Hash = sha1($password);
+    return password_hash($sha1Hash, PASSWORD_ARGON2I);
 }
 
 // Handle form submission
@@ -29,8 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insert into the users table
         
             $pwhash = hashPassword($password);
-				    $sql = "INSERT INTO users (login, email, pwhash) VALUES ('" . $login . "', '" . $email . "', '" . $pwhash . "')";
-						$conn->query($sql);
+			$sql = "INSERT INTO users (login, email, pwhash) VALUES ('" . $login . "', '" . $email . "', '" . $pwhash . "')";
+				$conn->query($sql);
 
             // Get the newly created user ID
 						$user_id = $conn->insert_id;
