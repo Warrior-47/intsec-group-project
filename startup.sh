@@ -22,7 +22,10 @@ fi
 echo -e "\nBuilding docker image with name $DOCKER_IMAGE"
 docker build -t $DOCKER_IMAGE .
 
-echo -e "\nRunning container with name $CONTAINER_NAME"
-docker run -e GROUP_SECRET=$GROUP_SECRET -d --name $CONTAINER_NAME -p 8080:80 -p 8081:22 -p 3002:3002 -e HOST="localhost" $DOCKER_IMAGE
-
-echo -e "\nContainer is up and running."
+if [[ $? -eq 0 ]]; then
+    echo -e "\nRunning container with name $CONTAINER_NAME"
+    docker run -e GROUP_SECRET=$GROUP_SECRET -d --name $CONTAINER_NAME -p 8080:80 -p 8081:22 -p 3002:3002 -e HOST="localhost" $DOCKER_IMAGE
+    echo -e "\nContainer is up and running."
+else
+    echo -e "\nFailed to build image. See error above."
+fi
