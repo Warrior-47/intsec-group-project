@@ -1,7 +1,22 @@
 <?php
 // Include database connection and start session
 include 'db_connect.php';
+
+// Start secure session
 session_start();
+
+// Regenerate session ID to prevent session fixation attacks
+
+
+// Set secure session cookie parameters
+$cookie_params = session_get_cookie_params();
+session_set_cookie_params([
+    'lifetime' => $cookie_params['lifetime'],
+    'path' => $cookie_params['path'],
+    'domain' => $cookie_params['domain'],
+    'httponly' => true,                  
+    'samesite' => 'Strict'               
+]);
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -11,6 +26,13 @@ if (!isset($_SESSION['user_id'])) {
 
 // Get user ID
 $user_id = $_SESSION['user_id'];
+
+// Validate user ID format (optional for additional security)
+if (!is_numeric($user_id)) {
+    session_destroy();
+    header("Location: connexion.php");
+    exit();
+}
 
 // Fetch current user info from the database
 /*$stmt = $pdo->prepare("
@@ -49,6 +71,7 @@ function uploadAvatar($file, $user_id) {
 
     // File upload process
     $file_name = basename($file['name']);
+    $file_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $file_name);
     $file_tmp = $file['tmp_name'];
     
     // Check for double file extension (i.e., multiple periods in the file name)
@@ -82,11 +105,11 @@ function uploadAvatar($file, $user_id) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $birthdate = $_POST['birthdate'];
-    $location = $_POST['location'];
-    $bio = $_POST['bio'];
-    $avatar_path = $user['avatar']; // Default to current avatar
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL); 
+    $birthdate = htmlspecialchars($_POST['birthdate'], ENT_QUOTES, 'UTF-8'); 
+    $location = htmlspecialchars($_POST['location'], ENT_QUOTES, 'UTF-8'); 
+    $bio = htmlspecialchars($_POST['bio'], ENT_QUOTES, 'UTF-8');
+
 
     // Check if an avatar file was uploaded
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
@@ -99,21 +122,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Update the users table (email)
-    $sql = "UPDATE users SET email = '" . $email . "' WHERE id = " . $user_id;
-                $result = $conn->query($sql);
+    // $sql = "UPDATE users SET email = '" . $email . "' WHERE id = " . $user_id;
+    //             $result = $conn->query($sql);
+    $stmt = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
+    $stmt->bind_param("si", $email, $user_id);
+    $stmt->execute();
+   
 
 
 
     // Update the userinfos table (birthdate, location, bio, avatar)
     
-    $sql = "
-        INSERT INTO userinfos (userid, birthdate, location, bio, avatar)
-        VALUES (" . $user_id . ", '" . $birthdate . "', '" . $location . "', '" . $bio . "', '" . $avatar_path . "')
-        ON DUPLICATE KEY UPDATE birthdate = '" . $birthdate . "', location = '" . $location . "', bio = '" . $bio . "', avatar = '" . $avatar_path . "'
-    ";
-                $result = $conn->query($sql);
+    $stmt = $conn->prepare("
+    INSERT INTO userinfos (userid, birthdate, location, bio, avatar)
+    VALUES (?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE birthdate = VALUES(birthdate), location = VALUES(location), bio = VALUES(bio), avatar = VALUES(avatar)
+    ");
+    $stmt->bind_param("issss", $user_id, $birthdate, $location, $bio, $avatar_path);
+    $stmt->execute();
 
-    echo "<p>Profile updated successfully!</p>";
 }
 ?>
 
@@ -181,24 +208,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 <form method="POST" action="settings.php" enctype="multipart/form-data">
                                                                 <!-- Display current avatar -->
                                                                 <?php if ($user['avatar']): ?>
-                                                                    <img src="<?= $user['avatar'] ?>" alt="Avatar" class="avatar">
+                                                                    <img src="<?= htmlspecialchars($user['avatar'], ENT_QUOTES, 'UTF-8') ?>" alt="Avatar" class="avatar">
                                                                 <?php endif; ?>
 
                                                                 <!-- Email -->
+                                                                <!-- Email -->
                                                                 <label for="email">Email:</label>
-                                                                <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                                                                <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') ?>" required>
 
-                                                                <!-- Birthdate -->
-                                                                <label for="birthdate">Birth Date:</label>
-                                                                <input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate']) ?>" required>
+                                                                 <!-- Birthdate -->
+                                                                 <label for="birthdate">Birth Date:</label>
+                                                                 <input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate'], ENT_QUOTES, 'UTF-8') ?>" required>
 
-                                                                <!-- Location -->
-                                                                <label for="location">Location:</label>
-                                                                <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location']) ?>">
+                                                                 <!-- Location -->
+                                                                 <label for="location">Location:</label>
+                                                                 <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location'], ENT_QUOTES, 'UTF-8') ?>">
 
                                                                 <!-- Bio -->
                                                                 <label for="bio">Bio:</label>
-                                                                <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio']) ?></textarea>
+                                                                <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio'], ENT_QUOTES, 'UTF-8') ?></textarea>
+
 
                                                                 <!-- Avatar Upload -->
                                                                 <label for="avatar">Change Avatar:</label>
