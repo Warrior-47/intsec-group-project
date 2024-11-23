@@ -6,7 +6,7 @@ if [[ -d /passoire/flags-enc ]]; then
 	/passoire/flags/init.sh
 fi
 
-
+chown -R passoire:www-data /passoire/web/uploads && chmod 770 /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
 
 # Start DB, web server and ssh server
 service mysql start

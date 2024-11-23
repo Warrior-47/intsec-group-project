@@ -4,6 +4,6 @@ RUN apt update && apt upgrade -y
 
 COPY ./passoire /passoire
 
-RUN chmod 777 /passoire/web/uploads
+RUN chown -R passoire /passoire
 
 CMD ["/passoire/init.sh"]
