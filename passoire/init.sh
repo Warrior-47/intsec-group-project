@@ -17,6 +17,7 @@ DB_NAME="passoire"
 DB_USER="passoire"
 DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
 
+
 # Initialize database
 echo "Creating MySQL database and user..."
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
@@ -26,6 +27,11 @@ mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'localhost' WITH G
 mysql -u root -e "FLUSH PRIVILEGES;"
 
 mysql -u root ${DB_NAME} < config/passoire.sql
+
+#password update for users
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Pr/BAMLvlCT2/7mgtUl1UoXgZw' WHERE id = 1;"
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Hg9+2jHJl5UeIKdQ7O71wLNOag' WHERE id = 2;"
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$apaDdIrkUiI7crHkYNeftrKTAw' WHERE id = 4;"
 
 # Redirect querry from website root to our main page
 rm /var/www/html/index.html

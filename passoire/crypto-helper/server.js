@@ -104,7 +104,7 @@ app.post('/decrypt/aes', (req, res) => {
 // Old unused API, if you see this, you can remove it.
 app.post('/flag', (req, res) => {
   const { text, key } = req.body;
-    res.send({ flag: "flag_10 is bd4a2e1d4d538fe6350f85a71a348d2c0d5db4c6." });
+    res.send({ flag: "flag_10 is d33c2f564583fe2c0nicetry074d4b35a07f4fc." });
 });
 
 // Start the server

@@ -28,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 				}
 
         // If the user exists and the password matches
-        if ($user && (sha1($password) == $user['pwhash'])) {
+		$sha1Pass = sha1($password);
+        if ($user && password_verify($sha1Pass, $user['pwhash'])) {
             // Set the session variable
             $_SESSION['user_id'] = $user['id'];
             // Redirect to a different page (e.g., profile.php)

@@ -13,7 +13,6 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-
 /* TODO: Replace old SQL connector with modern PDO and prepared statements.*/
 ?>
 
