@@ -8,27 +8,7 @@ session_start();
 // Initialize an error message variable
 $error = '';
 
-// Initialize login attempts in the session if not already set
-if (!isset($_SESSION['login_attempts'])) {
-    $_SESSION['login_attempts'] = 0;
-    $_SESSION['last_attempt_time'] = 0;
-}
-
-// Check for rate limiting
-$max_attempts = 3;
-$lockout_time = 300; // 5 minutes in seconds
-
-if ($_SESSION['login_attempts'] >= $max_attempts) {
-    $remaining_time = $lockout_time - (time() - $_SESSION['last_attempt_time']);
-    if ($remaining_time > 0) {
-        $error = "Too many failed attempts. Please try again in " . ceil($remaining_time / 60) . " minutes.";
-    } else {
-        // Reset attempts after lockout period
-        $_SESSION['login_attempts'] = 0;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_attempts) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $login = $_POST['login'];
     $password = $_POST['password'];
 
@@ -36,34 +16,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
     if (!empty($login) && !empty($password)) {
         // Fetch the user from the database
         $sql = "SELECT id, pwhash FROM users WHERE login = \"" . $login . "\"";
-        $result = $conn->query($sql);
 
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
+                                // Execute query
+                                $result = $conn->query($sql);
 
-            // Verify password
-            if (sha1($password) == $user['pwhash']) {
-                // Reset login attempts on successful login
-                $_SESSION['login_attempts'] = 0;
-                $_SESSION['user_id'] = $user['id'];
-                header('Location: index.php');
-                exit();
-            } else {
-                $error = 'Invalid password. Please try again.';
-            }
-        } else {
+                                if ($result->num_rows > 0) {
+                                                // Fetch the first row of results into an array
+                                                $user = $result->fetch_assoc();
+                                } else {
+                                                echo "No results found.";
+                                }
+
+        // If the user exists and the password matches
+        if ($user && (sha1($password) == $user['pwhash'])) {
+            // Set the session variable
+            $_SESSION['user_id'] = $user['id'];
+            // Redirect to a different page (e.g., profile.php)
+            header('Location: index.php');
+            exit();
+        } elseif(!($user)) {
             $error = 'Invalid login. Please try again.';
+        } else {
+            $error = 'Invalid password. Please try again.';
         }
     } else {
         $error = 'Please fill in both fields.';
     }
-
-    // Increment login attempts
-    $_SESSION['login_attempts']++;
-    $_SESSION['last_attempt_time'] = time();
 }
 ?>
-
 
 <!DOCTYPE html>
 <html>
@@ -118,8 +98,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
                                         </div>
     
     
-                                                </div>
-                                        </div>
-                                </div>
-</body>
-</html>
+  
