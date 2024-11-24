@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
         $stmt->bind_param("s", $login); 
         // Execute the statement
         $stmt->execute();
+		$result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
