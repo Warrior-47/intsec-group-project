@@ -7,7 +7,7 @@ session_start();
 // Initialize an error message variable
 $error = '';
 
-// Initialize login attempts in the session if not already set
+// Initialize login attempts in the session
 if (!isset($_SESSION['login_attempts'])) {
     $_SESSION['login_attempts'] = 0;
     $_SESSION['last_attempt_time'] = 0;
