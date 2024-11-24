@@ -37,14 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
     // Check if login and password are provided
     if (!empty($login) && !empty($password)) {
         // Fetch the user from the database
-        $sql = "SELECT id, pwhash FROM users WHERE login = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $login); 
-        // Execute the statement
-        $stmt->execute();
-
-        // Get the result
-        $result = $stmt->get_result();
+        $sql = "SELECT id, pwhash FROM users WHERE login = \"" . $login . "\"";
+        $result = $conn->query($sql);
 
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
