@@ -1,3 +1,4 @@
+<?php
 // Include the database connection
 include 'db_connect.php';
 
@@ -7,7 +8,7 @@ session_start();
 // Initialize an error message variable
 $error = '';
 
-// Initialize login attempts in the session
+// Initialize login attempts in the session if not already set
 if (!isset($_SESSION['login_attempts'])) {
     $_SESSION['login_attempts'] = 0;
     $_SESSION['last_attempt_time'] = 0;
