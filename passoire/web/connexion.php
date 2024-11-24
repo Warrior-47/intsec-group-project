@@ -16,8 +16,7 @@ if (!isset($_SESSION['login_attempts'])) {
 
 // Check for rate limiting
 $max_attempts = 3;
-$lockout_time = 300; 
-$lockout = false;
+$lockout_time = 120; 
 
 if ($_SESSION['login_attempts'] >= $max_attempts) {
     $remaining_time = $lockout_time - (time() - $_SESSION['last_attempt_time']);
@@ -37,13 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
 
     // Check if login and password are provided
     if (!empty($login) && !empty($password)) {
-        // Prepare the SQL query with placeholders
-        $stmt = $conn->prepare("SELECT id, pwhash FROM users WHERE login = ?");
-        
-        // Bind the user input to the query
+        // Fetch the user from the database
+        $sql = "SELECT id, pwhash FROM users WHERE login = ?";
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $login); 
-
-        // Execute the query
+        // Execute the statement
         $stmt->execute();
 
         // Get the result
@@ -52,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
 
-            // Verify password (ensure you're using a hashed password in the database)
-            if (password_verify($password, $user['pwhash'])) {
+            // Verify password
+            if (sha1($password) == $user['pwhash']) {
                 // Reset login attempts on successful login
                 $_SESSION['login_attempts'] = 0;
                 $_SESSION['user_id'] = $user['id'];
@@ -65,9 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
         } else {
             $error = 'Invalid login. Please try again.';
         }
-
-        // Close the statement
-        $stmt->close();
     } else {
         $error = 'Please fill in both fields.';
     }
@@ -77,11 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
     $_SESSION['last_attempt_time'] = time();
 }
 ?>
-
-
-
-
-
 
 
 <!DOCTYPE html>
