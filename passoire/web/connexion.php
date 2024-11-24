@@ -16,15 +16,17 @@ if (!isset($_SESSION['login_attempts'])) {
 
 // Check for rate limiting
 $max_attempts = 3;
-$lockout_time = 300; // 5 minutes in seconds
+$lockout_time = 300; 
 
 if ($_SESSION['login_attempts'] >= $max_attempts) {
     $remaining_time = $lockout_time - (time() - $_SESSION['last_attempt_time']);
     if ($remaining_time > 0) {
         $error = "Too many failed attempts. Please try again in " . ceil($remaining_time / 60) . " minutes.";
+        $lockout = true;  // Set flag to disable button
     } else {
         // Reset attempts after lockout period
         $_SESSION['login_attempts'] = 0;
+        $lockout = false; // Allow login attempt after lockout
     }
 }
 
@@ -88,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
 <?php include 'navbar.php'; ?>
 
 
-
                 <!-- Page Container -->
                 <div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">
 
@@ -96,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
                         <!-- The Grid -->
                         <div class="w3-row">
                                 <div class="w3-col m12">
-
 
 
                                 <div class="w3-card w3-round">
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['login_attempts'] < $max_a
                                                                 <form action="connexion.php" method="post">
                                                                     <input type="text" class="w3-border w3-padding w3-margin" name="login" placeholder="Login" required><br />
                                                                     <input type="password" class="w3-border w3-padding w3-margin" name="password" placeholder="Password" required><br />
-                                                                    <button type="submit" class="w3-button w3-theme w3-margin">Login</button><br />
+                                                                    <button type="submit" class="w3-button w3-theme w3-margin" <?php echo isset($lockout) && $lockout ? 'disabled' : ''; ?>>Login</button><br />
                                                                 </form>
 
                                                                 <p>Don't have a login yet? <a href="signup.php"> Sign up here!</a></p>
