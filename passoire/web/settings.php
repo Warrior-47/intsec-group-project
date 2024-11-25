@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 // Include database connection and start session
 include 'db_connect.php';
 session_start();
@@ -12,30 +16,25 @@ if (!isset($_SESSION['user_id'])) {
 // Get user ID
 $user_id = $_SESSION['user_id'];
 
-// Fetch current user info from the database
-/*$stmt = $pdo->prepare("
+// Fetch current user info from the database using prepared statements
+$stmt = $conn->prepare("
     SELECT u.login, u.email, ui.birthdate, ui.location, ui.bio, ui.avatar 
     FROM users u
     LEFT JOIN userinfos ui ON u.id = ui.userid
-    WHERE u.id = \"" . $user_id . "\"
+    WHERE u.id = ?
 ");
-$stmt->execute(['user_id' => $user_id]);
-$user = $stmt->fetch();*/
+if (!$stmt) {
+    die('Error preparing statement: ' . $conn->error);  // Debugging SQL preparation error
+}
+$stmt->bindValue(1, $user_id, PDO::PARAM_INT); // Bind the user ID parameter
+if (!$stmt->execute()) {
+    die('Error executing statement: ' . $stmt->errorInfo()[2]);  // Debugging SQL execution error
+}
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-$sql = "
-    SELECT u.login, u.email, ui.birthdate, ui.location, ui.bio, ui.avatar 
-    FROM users u
-    LEFT JOIN userinfos ui ON u.id = ui.userid
-    WHERE u.id = \"" . $user_id . "\"
-";
-$result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-		// Fetch the first row of results into an array
-		$user = $result->fetch_assoc();
-} else {
-		echo "No results found.";
+if (!$user) {
+    echo "No results found.";
+    exit();
 }
 
 // Function to handle avatar upload
@@ -43,7 +42,9 @@ function uploadAvatar($file, $user_id) {
     $upload_dir = 'uploads/';
     // Ensure uploads directory exists
     if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
+        if (!mkdir($upload_dir, 0777, true)) {
+            return "Failed to create upload directory.";
+        }
     }
 
     // File upload process
@@ -65,7 +66,7 @@ function uploadAvatar($file, $user_id) {
     if (move_uploaded_file($file_tmp, $file_path)) {
         return $file_path;
     } else {
-        return "Failed to upload avatar.";
+        return "Failed to upload avatar: " . $file['error'];
     }
 }
 
@@ -88,40 +89,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Update the users table (email)
-    $sql = "UPDATE users SET email = '" . $email . "' WHERE id = " . $user_id;
-		$result = $conn->query($sql);
-
-
+    $stmt = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
+    if (!$stmt) {
+        die('Error preparing statement: ' . $conn->error);  // Debugging SQL preparation error
+    }
+    $stmt->bindValue(1, $email, PDO::PARAM_STR);
+    $stmt->bindValue(2, $user_id, PDO::PARAM_INT);
+    if (!$stmt->execute()) {
+        die('Error executing statement: ' . $stmt->errorInfo()[2]);  // Debugging SQL execution error
+    }
 
     // Update the userinfos table (birthdate, location, bio, avatar)
-    
-    $sql = "
+    $stmt = $conn->prepare("
         INSERT INTO userinfos (userid, birthdate, location, bio, avatar)
-        VALUES (" . $user_id . ", '" . $birthdate . "', '" . $location . "', '" . $bio . "', '" . $avatar_path . "')
-        ON DUPLICATE KEY UPDATE birthdate = '" . $birthdate . "', location = '" . $location . "', bio = '" . $bio . "', avatar = '" . $avatar_path . "'
-    ";
-		$result = $conn->query($sql);
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE birthdate = ?, location = ?, bio = ?, avatar = ?
+    ");
+    if (!$stmt) {
+        die('Error preparing statement: ' . $conn->error);  // Debugging SQL preparation error
+    }
+    $stmt->bindValue(1, $user_id, PDO::PARAM_INT);
+    $stmt->bindValue(2, $birthdate, PDO::PARAM_STR);
+    $stmt->bindValue(3, $location, PDO::PARAM_STR);
+    $stmt->bindValue(4, $bio, PDO::PARAM_STR);
+    $stmt->bindValue(5, $avatar_path, PDO::PARAM_STR);
+    $stmt->bindValue(6, $birthdate, PDO::PARAM_STR);
+    $stmt->bindValue(7, $location, PDO::PARAM_STR);
+    $stmt->bindValue(8, $bio, PDO::PARAM_STR);
+    $stmt->bindValue(9, $avatar_path, PDO::PARAM_STR);
+
+    if (!$stmt->execute()) {
+        die('Error executing statement: ' . $stmt->errorInfo()[2]);  // Debugging SQL execution error
+    }
 
     echo "<p>Profile updated successfully!</p>";
 }
 ?>
 
 <!DOCTYPE html>
-<html>
-	<head>
-		<title>Passoire: A simple file hosting server</title>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="stylesheet" href="./style/w3.css">
-		<link rel="stylesheet" href="./style/w3-theme-blue-grey.css">
-		<link rel="stylesheet" href="./style/css/fontawesome.css">
-		<link href="./style/css/brands.css" rel="stylesheet" />
-		<link href="./style/css/solid.css" rel="stylesheet" />
-		<style>
-			html, body, h1, h2, h3, h4, h5 {font-family: "Open Sans", sans-serif}
-			.error { color: red; }
-      .success { color: green; }
-      form {
+<html lang="en">
+<head>
+    <title>Passoire: A simple file hosting server</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./style/w3.css">
+    <link rel="stylesheet" href="./style/w3-theme-blue-grey.css">
+    <link rel="stylesheet" href="./style/css/fontawesome.css">
+    <link href="./style/css/brands.css" rel="stylesheet" />
+    <link href="./style/css/solid.css" rel="stylesheet" />
+    <style>
+        html, body, h1, h2, h3, h4, h5 {font-family: "Open Sans", sans-serif}
+        .error { color: red; }
+        .success { color: green; }
+        form {
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
@@ -146,63 +166,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 20px;
             border-radius: 50%;
         }
-		</style>
-	</head>
-	<body class="w3-theme-l5">
-	
-		<?php include 'navbar.php'; ?>
-		
-		
-		
-		<!-- Page Container -->
-		<div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">
-			<div class="w3-col m12">
-		
-		
-				<div class="w3-card w3-round">
-					<div class="w3-container w3-center center-c w3-white">
-    				<h1>User Settings</h1>
-		      </div>
-					
-					
-					<div class="w3-container w3-center center-c w3-white  w3-margin-bottom w3-padding-bottom">
+    </style>
+</head>
+<body class="w3-theme-l5">
 
-						<form method="POST" action="settings.php" enctype="multipart/form-data">
-								<!-- Display current avatar -->
-								<?php if ($user['avatar']): ?>
-								    <img src="<?= $user['avatar'] ?>" alt="Avatar" class="avatar">
-								<?php endif; ?>
-								
-								<!-- Email -->
-								<label for="email">Email:</label>
-								<input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+<?php include 'navbar.php'; ?>
 
-								<!-- Birthdate -->
-								<label for="birthdate">Birth Date:</label>
-								<input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate']) ?>" required>
+<!-- Page Container -->
+<div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">
+    <div class="w3-col m12">
+        <div class="w3-card w3-round">
+            <div class="w3-container w3-center center-c w3-white">
+                <h1>User Settings</h1>
+            </div>
 
-								<!-- Location -->
-								<label for="location">Location:</label>
-								<input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location']) ?>">
+            <div class="w3-container w3-center center-c w3-white w3-margin-bottom w3-padding-bottom">
+                <form method="POST" action="settings.php" enctype="multipart/form-data">
+                    <!-- Display current avatar -->
+                    <?php if ($user['avatar']): ?>
+                        <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" class="avatar">
+                    <?php endif; ?>
 
-								<!-- Bio -->
-								<label for="bio">Bio:</label>
-								<textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio']) ?></textarea>
+                    <!-- Email -->
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
 
-								<!-- Avatar Upload -->
-								<label for="avatar">Change Avatar:</label>
-								<input type="file" id="avatar" name="avatar" accept="image/*">
-								<br/>
-		
-								<!-- Submit Button -->
-								<p>
-									<button type="submit" class="w3-button w3-theme w3-padding">Update Profile</button>
-								</p>
-						</form>
-								<br/>
-			</div>
-		</div>
-	</div>
+                    <!-- Birthdate -->
+                    <label for="birthdate">Birth Date:</label>
+                    <input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate']) ?>" required>
+
+                    <!-- Location -->
+                    <label for="location">Location:</label>
+                    <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location']) ?>">
+
+                    <!-- Bio -->
+                    <label for="bio">Bio:</label>
+                    <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio']) ?></textarea>
+
+                    <!-- Avatar Upload -->
+                    <label for="avatar">Change Avatar:</label>
+                    <input type="file" id="avatar" name="avatar" accept="image/*">
+                    <br/>
+
+                    <!-- Submit Button -->
+                    <p>
+                        <button type="submit" class="w3-button w3-theme w3-padding">Update Profile</button>
+                    </p>
+                </form>
+                <br/>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
-
