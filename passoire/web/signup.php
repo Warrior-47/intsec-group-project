@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate passwords
     if ($password !== $password_confirm) {
         $error = "<p class=\"error\">Passwords do not match. Please try again.</p>";
+    } elseif (!preg_match('/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/', $password)) {
+        $error = "<p class=\"error\">Password must be at least 8 characters long and contain at least one letter and one number.</p>";
     } else {
         // Check if the login or email already exists using PDO
         $sql = "SELECT id FROM users WHERE login = :login OR email = :email";

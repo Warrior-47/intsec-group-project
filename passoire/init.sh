@@ -6,7 +6,9 @@ if [[ -d /passoire/flags-enc ]]; then
 	/passoire/flags/init.sh
 fi
 
-
+# Updating ownership and permissions of uploads and img folder
+chown -R www-data:www-data /passoire/web/uploads && chmod 750 /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
+chown -R www-data:www-data /passoire/web/img && chmod 750 /passoire/web/img && chmod 640 /passoire/web/img/*
 
 # Start DB, web server and ssh server
 service mysql start
@@ -32,6 +34,9 @@ mysql -u root ${DB_NAME} < config/passoire.sql
 mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Pr/BAMLvlCT2/7mgtUl1UoXgZw' WHERE id = 1;"
 mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Hg9+2jHJl5UeIKdQ7O71wLNOag' WHERE id = 2;"
 mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$apaDdIrkUiI7crHkYNeftrKTAw' WHERE id = 4;"
+
+# Updating avatar location for john_doe
+mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
 
 # Redirect querry from website root to our main page
 rm /var/www/html/index.html

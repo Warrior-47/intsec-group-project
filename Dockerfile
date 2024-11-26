@@ -4,6 +4,8 @@ RUN apt update && apt upgrade -y
 
 COPY ./passoire /passoire
 
-RUN chmod 777 /passoire/web/uploads
+COPY ./config/apache2.conf /etc/apache2/apache2.conf
+
+RUN chown -R passoire /passoire
 
 CMD ["/passoire/init.sh"]

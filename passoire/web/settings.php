@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = 'Invalid login. Please try again.';
         }
     } else {
-        $error = 'Please fill in both fields.';
+        $error = 'Please enter both login and password.';
     }
 }
 ?>
@@ -48,9 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Passoire: A simple file hosting server</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
     <link rel="stylesheet" href="./style/w3.css">
     <link rel="stylesheet" href="./style/w3-theme-blue-grey.css">
     <link rel="stylesheet" href="./style/css/fontawesome.css">
@@ -62,9 +62,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-bottom: 25px;
             padding-bottom: 25px;
         }
+
+        form {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .error { color: red; }
+        .success { color: green; }
     </style>
 </head>
 <body class="w3-theme-l5">
+
 <?php include 'navbar.php'; ?>
 
 <!-- Page Container -->
@@ -75,19 +95,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="w3-container w3-center center-c">
                     <h2>Login</h2>
 
-                    <!-- Display error message if any -->
-                    <?php if ($error): ?>
-                        <p class="error"><?php echo $error; ?></p>
-                    <?php endif; ?>
+                    <!-- Display error or success messages -->
+                    <?php if (isset($error)) echo "<p class='error'>$error</p>"; ?>
 
                     <!-- Login Form -->
-                    <form action="connexion.php" method="post">
-                        <input type="text" class="w3-border w3-padding w3-margin" name="login" placeholder="Login" required><br />
-                        <input type="password" class="w3-border w3-padding w3-margin" name="password" placeholder="Password" required><br />
-                        <button type="submit" class="w3-button w3-theme w3-margin">Login</button><br />
-                    </form>
+                    <form method="POST" action="login.php">
+                        <label for="login">Login:</label>
+                        <input type="text" id="login" name="login" required>
 
-                    <p>Don't have a login yet? <a href="signup.php">Sign up here!</a></p>
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+
+                        <button type="submit" class="w3-button w3-theme w3-margin">Login</button>
+                    </form>
                 </div>
             </div>
         </div>
