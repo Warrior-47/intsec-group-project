@@ -1,128 +1,47 @@
 <?php
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-// Include database connection and start session
+// Include the database connection
 include 'db_connect.php';
+
+// Start the session to track user login status
 session_start();
 
-// Check if the user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: connexion.php");
-    exit();
-}
+// Initialize an error message variable
+$error = '';
 
-// Get user ID
-$user_id = $_SESSION['user_id'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Sanitize and fetch the form data
+    $login = filter_var($_POST['login'], FILTER_SANITIZE_STRING);
+    $password = $_POST['password'];
 
-// Fetch current user info from the database using prepared statements
-$stmt = $conn->prepare("
-    SELECT u.login, u.email, ui.birthdate, ui.location, ui.bio, ui.avatar 
-    FROM users u
-    LEFT JOIN userinfos ui ON u.id = ui.userid
-    WHERE u.id = ?
-");
-if (!$stmt) {
-    die('Error preparing statement: ' . $conn->error);  // Debugging SQL preparation error
-}
-$stmt->bindValue(1, $user_id, PDO::PARAM_INT); // Bind the user ID parameter
-if (!$stmt->execute()) {
-    die('Error executing statement: ' . $stmt->errorInfo()[2]);  // Debugging SQL execution error
-}
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Check if login and password are provided
+    if (!empty($login) && !empty($password)) {
+        // Prepare SQL query to fetch the user by login
+        $sql = "SELECT id, pwhash FROM users WHERE login = :login";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':login', $login);
+        $stmt->execute();
 
-if (!$user) {
-    echo "No results found.";
-    exit();
-}
+        // Check if user exists
+        if ($stmt->rowCount() > 0) {
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Function to handle avatar upload
-function uploadAvatar($file, $user_id) {
-    $upload_dir = 'uploads/';
-    // Ensure uploads directory exists
-    if (!is_dir($upload_dir)) {
-        if (!mkdir($upload_dir, 0777, true)) {
-            return "Failed to create upload directory.";
-        }
-    }
+            // Verify the password with the hashed password stored in the database
+            if (password_verify($password, $user['pwhash'])) {
+                // Set session variable for the logged-in user
+                $_SESSION['user_id'] = $user['id'];
 
-    // File upload process
-    $file_name = basename($file['name']);
-    $file_tmp = $file['tmp_name'];
-    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-    $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-
-    // Ensure the uploaded file is an image and has a valid extension
-    if (!in_array($file_ext, $allowed_ext)) {
-        return "Invalid file type. Only JPG, JPEG, PNG, and GIF files are allowed.";
-    }
-
-    // Set new file name and path
-    $new_file_name = 'avatar_' . $user_id . '.' . $file_ext;
-    $file_path = $upload_dir . $new_file_name;
-
-    // Move the uploaded file to the server
-    if (move_uploaded_file($file_tmp, $file_path)) {
-        return $file_path;
-    } else {
-        return "Failed to upload avatar: " . $file['error'];
-    }
-}
-
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $birthdate = $_POST['birthdate'];
-    $location = $_POST['location'];
-    $bio = $_POST['bio'];
-    $avatar_path = $user['avatar']; // Default to current avatar
-
-    // Check if an avatar file was uploaded
-    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        $avatar_upload_result = uploadAvatar($_FILES['avatar'], $user_id);
-        if (strpos($avatar_upload_result, 'uploads/') !== false) {
-            $avatar_path = $avatar_upload_result; // Set new avatar path if upload was successful
+                // Redirect to the index page (or any other page as needed)
+                header('Location: index.php');
+                exit();
+            } else {
+                $error = 'Invalid password. Please try again.';
+            }
         } else {
-            echo "<p>" . $avatar_upload_result . "</p>";
+            $error = 'Invalid login. Please try again.';
         }
+    } else {
+        $error = 'Please fill in both fields.';
     }
-
-    // Update the users table (email)
-    $stmt = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
-    if (!$stmt) {
-        die('Error preparing statement: ' . $conn->error);  // Debugging SQL preparation error
-    }
-    $stmt->bindValue(1, $email, PDO::PARAM_STR);
-    $stmt->bindValue(2, $user_id, PDO::PARAM_INT);
-    if (!$stmt->execute()) {
-        die('Error executing statement: ' . $stmt->errorInfo()[2]);  // Debugging SQL execution error
-    }
-
-    // Update the userinfos table (birthdate, location, bio, avatar)
-    $stmt = $conn->prepare("
-        INSERT INTO userinfos (userid, birthdate, location, bio, avatar)
-        VALUES (?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE birthdate = ?, location = ?, bio = ?, avatar = ?
-    ");
-    if (!$stmt) {
-        die('Error preparing statement: ' . $conn->error);  // Debugging SQL preparation error
-    }
-    $stmt->bindValue(1, $user_id, PDO::PARAM_INT);
-    $stmt->bindValue(2, $birthdate, PDO::PARAM_STR);
-    $stmt->bindValue(3, $location, PDO::PARAM_STR);
-    $stmt->bindValue(4, $bio, PDO::PARAM_STR);
-    $stmt->bindValue(5, $avatar_path, PDO::PARAM_STR);
-    $stmt->bindValue(6, $birthdate, PDO::PARAM_STR);
-    $stmt->bindValue(7, $location, PDO::PARAM_STR);
-    $stmt->bindValue(8, $bio, PDO::PARAM_STR);
-    $stmt->bindValue(9, $avatar_path, PDO::PARAM_STR);
-
-    if (!$stmt->execute()) {
-        die('Error executing statement: ' . $stmt->errorInfo()[2]);  // Debugging SQL execution error
-    }
-
-    echo "<p>Profile updated successfully!</p>";
 }
 ?>
 
@@ -139,81 +58,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="./style/css/solid.css" rel="stylesheet" />
     <style>
         html, body, h1, h2, h3, h4, h5 {font-family: "Open Sans", sans-serif}
-        .error { color: red; }
-        .success { color: green; }
-        form {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="date"],
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        img.avatar {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-            border-radius: 50%;
+        .center-c {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
         }
     </style>
 </head>
 <body class="w3-theme-l5">
-
 <?php include 'navbar.php'; ?>
 
 <!-- Page Container -->
 <div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">
-    <div class="w3-col m12">
-        <div class="w3-card w3-round">
-            <div class="w3-container w3-center center-c w3-white">
-                <h1>User Settings</h1>
-            </div>
+    <div class="w3-row">
+        <div class="w3-col m12">
+            <div class="w3-card w3-round">
+                <div class="w3-container w3-center center-c">
+                    <h2>Login</h2>
 
-            <div class="w3-container w3-center center-c w3-white w3-margin-bottom w3-padding-bottom">
-                <form method="POST" action="settings.php" enctype="multipart/form-data">
-                    <!-- Display current avatar -->
-                    <?php if ($user['avatar']): ?>
-                        <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" class="avatar">
+                    <!-- Display error message if any -->
+                    <?php if ($error): ?>
+                        <p class="error"><?php echo $error; ?></p>
                     <?php endif; ?>
 
-                    <!-- Email -->
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                    <!-- Login Form -->
+                    <form action="connexion.php" method="post">
+                        <input type="text" class="w3-border w3-padding w3-margin" name="login" placeholder="Login" required><br />
+                        <input type="password" class="w3-border w3-padding w3-margin" name="password" placeholder="Password" required><br />
+                        <button type="submit" class="w3-button w3-theme w3-margin">Login</button><br />
+                    </form>
 
-                    <!-- Birthdate -->
-                    <label for="birthdate">Birth Date:</label>
-                    <input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate']) ?>" required>
-
-                    <!-- Location -->
-                    <label for="location">Location:</label>
-                    <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location']) ?>">
-
-                    <!-- Bio -->
-                    <label for="bio">Bio:</label>
-                    <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio']) ?></textarea>
-
-                    <!-- Avatar Upload -->
-                    <label for="avatar">Change Avatar:</label>
-                    <input type="file" id="avatar" name="avatar" accept="image/*">
-                    <br/>
-
-                    <!-- Submit Button -->
-                    <p>
-                        <button type="submit" class="w3-button w3-theme w3-padding">Update Profile</button>
-                    </p>
-                </form>
-                <br/>
+                    <p>Don't have a login yet? <a href="signup.php">Sign up here!</a></p>
+                </div>
             </div>
         </div>
     </div>
