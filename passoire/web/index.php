@@ -2,13 +2,53 @@
 // Start the session to check for login status
 session_start();
 
-
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// flag_13 is 4c67df2a507f7398c201a2327bad35e31306027e.
-// This flag is not visible in the HTML of this page. If an attacker can read this, this is a bad sign.
+// List of common SQL injection keywords to block
+$sql_keywords = ['UNION', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'FROM', 'WHERE', 'ORDER', 'BY', 'LIMIT', 'DATABASE', 'INFORMATION_SCHEMA', 'TABLE', 'COLUMN'];
 
+// Function to check for SQL injection attempts
+function validate_sql_param($param) {
+    global $sql_keywords;
+    
+    // Convert to uppercase for comparison
+    $param_upper = strtoupper($param);
+    
+    // Check if the parameter contains any SQL keywords
+    foreach ($sql_keywords as $keyword) {
+        if (strpos($param_upper, $keyword) !== false) {
+            die('Invalid input: SQL injection detected.');
+        }
+    }
+
+    // Check for common special characters used in SQL injection
+    if (preg_match('/[\';\"--#\*\(\)]+/', $param)) {
+        die('Invalid input: special characters detected.');
+    }
+
+    return $param;
+}
+
+// Validate the 'filter' parameter (allow alphanumeric)
+$filter = isset($_GET['filter']) ? $_GET['filter'] : '';
+$filter = validate_sql_param($filter); // Validate filter
+
+// Validate the 'page' parameter (only numbers allowed)
+$page = isset($_GET['page']) ? $_GET['page'] : '';
+if (!preg_match('/^\d+$/', $page) && !empty($page)) {
+    die('Invalid input for page. Only numbers are allowed.');
+}
+
+// Validate the 'limit' parameter (only numbers allowed)
+$limit = isset($_GET['limit']) ? $_GET['limit'] : '';
+if (!preg_match('/^\d+$/', $limit) && !empty($limit)) {
+    die('Invalid input for limit. Only numbers are allowed.');
+}
+
+// flag_13 is 4c67df2a507f7398c201a2327bad35e31306027e.
+
+// Include the database connection file
 include 'db_connect.php'; // Use the updated PDO connection file
 
 $user = "";
@@ -152,4 +192,3 @@ function openNav() {
 </script>
 </body>
 </html>
-
