@@ -63,7 +63,7 @@ if ($result->num_rows > 0) {
 
 // Function to handle avatar upload
 function uploadAvatar($file, $user_id) {
-    $upload_dir = 'uploads/';
+    $upload_dir = 'img/';
     // Ensure uploads directory exists
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Check if an avatar file was uploaded
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
         $avatar_upload_result = uploadAvatar($_FILES['avatar'], $user_id);
-        if (strpos($avatar_upload_result, 'uploads/') !== false) {
+        if (strpos($avatar_upload_result, 'img/') !== false) {
             $avatar_path = $avatar_upload_result; // Set new avatar path if upload was successful
         } else {
             echo "<p>" . $avatar_upload_result . "</p>";
