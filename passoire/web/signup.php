@@ -18,30 +18,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate passwords
     if ($password !== $password_confirm) {
         $error = "<p class=\"error\">Passwords do not match. Please try again.</p>";
+    } elseif (!preg_match('/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/', $password)) {
+        $error = "<p class=\"error\">Password must be at least 8 characters long and contain at least one letter and one number.</p>";
     } else {
         // Check if the login or email already exists
-        
         $sql = "SELECT id FROM users WHERE login = '" . $login . "' OR email = '" . $email . "'";
-				$result = $conn->query($sql);
+        $result = $conn->query($sql);
 
-				if ($result->num_rows > 0) {
-            $error = "<p class=\"error\">Login or email already exists. Please choose a different one.</p>";
+        if ($result->num_rows > 0) {
+            $error = "<p class=\"error\">Login or email already exists. Please try again.</p>";
         } else {
-            // Insert into the users table
+                       // Insert into the users table
         
-            $pwhash = hashPassword($password);
-			$sql = "INSERT INTO users (login, email, pwhash) VALUES ('" . $login . "', '" . $email . "', '" . $pwhash . "')";
+				$pwhash = hashPassword($password);
+				$sql = "INSERT INTO users (login, email, pwhash) VALUES ('" . $login . "', '" . $email . "', '" . $pwhash . "')";
 				$conn->query($sql);
-
-            // Get the newly created user ID
-						$user_id = $conn->insert_id;
-
-            // Insert into the userinfos table
-            
-				    $sql = "INSERT INTO userinfos (userid, birthdate, location, bio, avatar) VALUES (" . $user_id . ", '', '', '', '')";
-						$conn->query($sql);
-
-            $error = "<p class=\"success\">Registration successful! You can now <a href='connexion.php'>log in</a>.</p>";
+		   
+				// Get the newly created user ID
+				$user_id = $conn->insert_id;
+		   
+				// Insert into the userinfos table
+					   
+				$sql = "INSERT INTO userinfos (userid, birthdate, location, bio, avatar) VALUES (" . $user_id . ", '', '', '', '')";
+				$conn->query($sql);
+		   
+				$error = "<p class=\"success\">Registration successful! You can now <a href='connexion.php'>log in</a>.</p>";
+			
         }
     }
 }
