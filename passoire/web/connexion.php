@@ -17,18 +17,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Fetch the user from the database
         $sql = "SELECT id, pwhash FROM users WHERE login = \"" . $login . "\"";
 
-                                // Execute query
-                                $result = $conn->query($sql);
+            // Execute query
+            $result = $conn->query($sql);
 
-                                if ($result->num_rows > 0) {
-                                                // Fetch the first row of results into an array
-                                                $user = $result->fetch_assoc();
-                                } else {
-                                                echo "No results found.";
-                                }
-
-        // If the user exists and the password matches
-        if ($user && (sha1($password) == $user['pwhash'])) {
+            if ($result->num_rows > 0) {
+                // Fetch the first row of results into an array
+                $user = $result->fetch_assoc();
+            } else {
+                echo "No results found.";
+            }
+            
+            $sha1Pass = sha1($password);
+            if ($user && password_verify($sha1Pass, $user['pwhash'])) {
             // Set the session variable
             $_SESSION['user_id'] = $user['id'];
             // Redirect to a different page (e.g., profile.php)
