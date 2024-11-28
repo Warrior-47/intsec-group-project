@@ -11,6 +11,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+function sanitize(str){
+  return str.replace( /[";'\[\]\{}()<>&/]*/g,"")
+}
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -27,7 +31,10 @@ app.options('*', (req, res) => {
 // Hashing APIs
 app.post('/hash/:type', (req, res) => {
   const { type } = req.params;
-  const { text } = req.body;
+  var { text } = req.body;
+  
+  text=sanitize(text)
+  
   const allowedHashes = ['md5', 'sha1'];
 
   if (!allowedHashes.includes(type)) {
@@ -38,7 +45,7 @@ app.post('/hash/:type', (req, res) => {
 	
   exec(cmd,{shell: '/bin/bash'}, (error, stdout) => {
     if (error) {
-      return res.status(500).send({error: error.message});
+      return res.status(500).send({error : "Error"});
     }
     res.send({ hash: stdout.split("= ")[1].trim() });
   });
@@ -48,11 +55,13 @@ app.post('/hash/:type', (req, res) => {
 app.post('/encrypt/des', (req, res) => {
   const { text, key } = req.body;
 
-	const cmd =`openssl des-ecb -e -K ${key} -in <(echo "${text}") -provider legacy -provider default -base64`;
+  text=sanitize(text)
+
+  const cmd =`openssl des-ecb -e -K ${key} -in <(echo "${text}") -provider legacy -provider default -base64`;
   console.log(cmd);
   exec(cmd,{shell: '/bin/bash'}, (error, stdout) => {
     if (error) {
-      return res.status(500).send({error: error.message});
+      return res.status(500).send({error : "Error"});
     }
     res.send({ encrypted: stdout.trim() });
   });
@@ -62,12 +71,13 @@ app.post('/encrypt/des', (req, res) => {
 app.post('/decrypt/des', (req, res) => {
   const { text, key } = req.body;
 
+  text=sanitize(text)
 
 	const cmd =`openssl des-ecb -d -K ${key} -in <(echo "${text}") -provider legacy -provider default -base64`;
   console.log(cmd);
   exec(cmd,{shell: '/bin/bash'}, (error, stdout) => {
     if (error) {
-      return res.status(500).send({error: error.message});
+      return res.status(500).send({error : "Error"});
     }
     res.send({ decrypted: stdout.trim() });
   });
@@ -77,11 +87,13 @@ app.post('/decrypt/des', (req, res) => {
 app.post('/encrypt/aes', (req, res) => {
   const { text, key } = req.body;
 
+  text=sanitize(text)
+
 	const cmd =`echo -n "${text}" | openssl enc -aes-256-cbc -base64 -pass pass:"${key}" -iv 00000000000000000000000000000000`;
   console.log(cmd);
   exec(cmd,{shell: '/bin/bash'}, (error, stdout) => {
     if (error) {
-      return res.status(500).send({error: error.message});
+      return res.status(500).send({error : "Error"});
     }
     res.send({ encrypted: stdout.trim() });
   });
@@ -91,11 +103,13 @@ app.post('/encrypt/aes', (req, res) => {
 app.post('/decrypt/aes', (req, res) => {
   const { text, key } = req.body;
 
+  text=sanitize(text)
+
 	const cmd =`echo "${text}" | openssl enc -aes-256-cbc -d -base64 -pass pass:"${key}" -iv 00000000000000000000000000000000`;
   console.log(cmd);
   exec(cmd,{shell: '/bin/bash'}, (error, stdout) => {
     if (error) {
-      return res.status(500).send({error: error.message});
+      return res.status(500).send({error : "Error"});
     }
     res.send({ decrypted: stdout.trim() });
   });
