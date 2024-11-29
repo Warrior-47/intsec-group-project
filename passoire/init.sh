@@ -13,6 +13,9 @@ chown -R www-data:www-data /passoire/web/img && chmod 750 /passoire/web/img && c
 # Removing admin user from server
 userdel -r admin
 
+# Removing my_own_cryptographic_algorithm binary
+rm /passoire/my_own_cryptographic_algorithm
+
 # Start DB, web server and ssh server
 service mysql start
 service ssh start
