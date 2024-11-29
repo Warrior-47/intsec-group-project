@@ -14,18 +14,15 @@ if (!isset($_GET['file'])) {
 $hash = $_GET['file'];
 
 // Prepare and execute a query to find the corresponding file for the given hash
+$stmt = $conn->prepare("SELECT f.path, f.type 
+                        FROM links l 
+                        JOIN files f ON l.fileid = f.id 
+                        WHERE l.hash = :hash 
+                        LIMIT 1");
+$stmt->bindValue(':hash', $hash, PDO::PARAM_STR);
+$stmt->execute();
 
-$sql = "SELECT f.path, f.type FROM links l JOIN files f ON l.fileid = f.id WHERE l.hash = \"" . $hash . "\" LIMIT 1";
-
-// Execute query
-$result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-		// Fetch the first row of results into an array
-		$file = $result->fetch_assoc();
-} else {
-		echo "No results found.";
-}
+$file = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($file) {
     // File found, prepare the download
