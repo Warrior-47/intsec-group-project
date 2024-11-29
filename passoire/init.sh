@@ -51,7 +51,6 @@ rm /var/www/html/index.html
 echo "<?php header(\"Location: passoire/index.php\"); ?>" > /var/www/html/index.php
 
 # Link apache dir and our web dir
-ln -s /usr/share/phpmyadmin/ /var/www/html/phpmyadmin
 ln -s /passoire/web/ /var/www/html/passoire
 
 # Adapt to our ip
