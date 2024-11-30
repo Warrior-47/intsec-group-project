@@ -8,8 +8,7 @@ include 'db_connect.php';
 
 // Function to hash passwords
 function hashPassword($password) {
-    $sha1Hash = sha1($password);
-    return password_hash($sha1Hash, PASSWORD_ARGON2I);
+    return password_hash($password, PASSWORD_ARGON2I);
 }
 
 // Handle form submission
