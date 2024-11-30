@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 function sanitize(str){
-  return str.replace( /[";'\[\]\{}()<>&/]*\|/g,"")
+  return str.replace( /[";'\[\]\{}()<>&/$]*/g,"");
 }
 
 app.use((req, res, next) => {
@@ -33,7 +33,8 @@ app.post('/hash/:type', (req, res) => {
   const { type } = req.params;
   var { text } = req.body;
   
-  text=sanitize(text)
+  text=sanitize(text);
+  return res.status(500).send({error : text});
   
   const allowedHashes = ['md5', 'sha1'];
 
@@ -71,7 +72,7 @@ app.post('/encrypt/des', (req, res) => {
 app.post('/decrypt/des', (req, res) => {
   const { text, key } = req.body;
 
-  text=sanitize(text)
+  text=sanitize(text);
 
 	const cmd =`openssl des-ecb -d -K ${key} -in <(echo "${text}") -provider legacy -provider default -base64`;
   console.log(cmd);
@@ -87,7 +88,7 @@ app.post('/decrypt/des', (req, res) => {
 app.post('/encrypt/aes', (req, res) => {
   const { text, key } = req.body;
 
-  text=sanitize(text)
+  text=sanitize(text);
 
 	const cmd =`echo -n "${text}" | openssl enc -aes-256-cbc -base64 -pass pass:"${key}" -iv 00000000000000000000000000000000`;
   console.log(cmd);
@@ -103,7 +104,7 @@ app.post('/encrypt/aes', (req, res) => {
 app.post('/decrypt/aes', (req, res) => {
   const { text, key } = req.body;
 
-  text=sanitize(text)
+  text=sanitize(text);
 
 	const cmd =`echo "${text}" | openssl enc -aes-256-cbc -d -base64 -pass pass:"${key}" -iv 00000000000000000000000000000000`;
   console.log(cmd);
