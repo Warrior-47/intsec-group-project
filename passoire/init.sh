@@ -38,8 +38,8 @@ mysql -u root -e "FLUSH PRIVILEGES;"
 mysql -u root ${DB_NAME} < config/passoire.sql
 
 # Password update for users
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Pr/BAMLvlCT2/7mgtUl1UoXgZw' WHERE id = 1;"
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Hg9+2jHJl5UeIKdQ7O71wLNOag' WHERE id = 2;"
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$eGtFYnZrRGFQc3RLT0tKNw\$o7qnNf5aZXO4EnAoB78jr8ksdw' WHERE id = 2;"
 
 # Removing admin user from DB
 mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"

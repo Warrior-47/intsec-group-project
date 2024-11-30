@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify(sha1($password), $user['pwhash'])) {
+        if ($user && password_verify($password, $user['pwhash'])) {
             // Set the session variable
             $_SESSION['user_id'] = $user['id'];
             // Redirect to a different page (e.g., index.php)
