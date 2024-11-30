@@ -10,6 +10,9 @@ fi
 chown -R www-data:www-data /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
 chmod 640 /passoire/web/img/*
 
+# Updating permissions of passoire user home directory
+chmod 750 /home/passoire && chmod 640 /home/passoire/*
+
 # Removing admin user from server
 userdel -r admin
 
