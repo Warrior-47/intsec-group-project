@@ -126,7 +126,7 @@ $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- JavaScript for copying link -->
     <script>
         function copyLink(hash) {
-            const link = window.location.origin + '/link.php?file=' + hash;
+            const link = window.location.origin + '/passoire/link.php?file=' + hash;
             navigator.clipboard.writeText(link).then(() => {
                 alert('Link copied to clipboard: ' + link);
             }).catch(err => {
