@@ -71,6 +71,9 @@ if (isset($_SESSION['user_id'])) {
         echo "An error occurred. Please try again later.";
     }
 }
+
+// flag_13 is 4c67df2a507f7398c201a2327bad35e31306027e.
+
 ?>
 
 <!DOCTYPE html>
