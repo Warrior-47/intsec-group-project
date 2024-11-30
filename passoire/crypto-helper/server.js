@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 function sanitize(str){
-  return str.replace( /[";'\[\]\{}()<>&/$]*/g,"");
+  return str.replace( /[";'\[\]\{}()<>&/$\|]*/g,"");
 }
 
 app.use((req, res, next) => {
@@ -33,9 +33,7 @@ app.post('/hash/:type', (req, res) => {
   const { type } = req.params;
   var { text } = req.body;
   
-  text=sanitize(text);
-  return res.status(500).send({error : text});
-  
+  text=sanitize(text);  
   const allowedHashes = ['md5', 'sha1'];
 
   if (!allowedHashes.includes(type)) {
