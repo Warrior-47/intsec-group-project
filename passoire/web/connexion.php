@@ -9,8 +9,8 @@ session_start();
 $error = '';
 
 // Enable error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+//error_reporting(E_ALL);
+//ini_set('display_errors', 1);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $login = $_POST['login'];
