@@ -15,6 +15,7 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/s
 COPY ./authorized_keys /home/passoire/.ssh/authorized_keys
 
 # Ensuring ownership of code
-RUN chown -R passoire /passoire
+RUN chown -R www-data /passoire/web
+RUN chmod -R 750 /passoire/web
 
 CMD ["/passoire/init.sh"]

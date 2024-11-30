@@ -7,8 +7,8 @@ if [[ -d /passoire/flags-enc ]]; then
 fi
 
 # Updating ownership and permissions of uploads and img folder
-chown -R www-data:www-data /passoire/web/uploads && chmod 750 /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
-chown -R www-data:www-data /passoire/web/img && chmod 750 /passoire/web/img && chmod 640 /passoire/web/img/*
+chown -R www-data:www-data /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
+chmod 640 /passoire/web/img/*
 
 # Removing admin user from server
 userdel -r admin
