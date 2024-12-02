@@ -5,6 +5,13 @@ RUN apt update && apt upgrade -y
 # Updating application code
 COPY ./passoire /passoire
 
+# Installing necessary nodejs packages
+WORKDIR /passoire/crypto-helper
+
+RUN npm install
+
+WORKDIR /passoire
+
 # Hardening apache2 config
 COPY ./config/apache2.conf /etc/apache2/apache2.conf
 
