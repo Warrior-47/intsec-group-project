@@ -26,6 +26,7 @@ userdel -r admin
 # Removing removable flags
 rm /passoire/my_own_cryptographic_algorithm
 rm /passoire/web/flag_3
+rm /passoire/web/uploads/encrypted
 
 # Start DB, web server and ssh server
 service mysql start
@@ -56,6 +57,9 @@ mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
 
 # Updating avatar location for john_doe
 mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
+
+#Updating files tabel to use the new encrypted file
+mysql -u root -e "UPDATE passoire.files SET path = 'uploads/encryptedFile' WHERE id = 2;"
 
 # Redirect querry from website root to our main page
 rm /var/www/html/index.html
