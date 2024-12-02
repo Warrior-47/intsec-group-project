@@ -6,6 +6,13 @@ if [[ -d /passoire/flags-enc ]]; then
 	/passoire/flags/init.sh
 fi
 
+# Adding system user with minimal permissions for apps that don't require permissions
+useradd --system --no-create-home --shell /usr/sbin/nologin normal-user
+
+# Changing ownership and permissions of crypto-helper server to normal-user
+chown -R normal-user /passoire/crypto-helper/{node_modules,server.js}
+chmod 750 /passoire/crypto-helper/*
+
 # Updating ownership and permissions of uploads and img folder
 chown -R www-data:www-data /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
 chmod 640 /passoire/web/img/*
@@ -72,6 +79,7 @@ sed -i "s/CONTAINER_IP/$HOST/g" /passoire/web/crypto.php
 sed -i "s/CONTAINER_IP/$HOST/g" /passoire/crypto-helper/server.js
 
 touch /passoire/logs/crypto-helper.log
+chown -R normal-user /passoire/logs
 
 # Start crypto helper api
 /passoire/crypto-helper/crypto-helper.sh start

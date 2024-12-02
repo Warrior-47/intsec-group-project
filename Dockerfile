@@ -1,6 +1,7 @@
 FROM nharrand/passoire:latest
 
 RUN apt update && apt upgrade -y
+RUN apt install -y gosu
 
 # Updating application code
 COPY ./passoire /passoire
