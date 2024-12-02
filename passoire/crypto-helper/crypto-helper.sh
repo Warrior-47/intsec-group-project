@@ -15,7 +15,7 @@ if [ "$1" == "start" ]; then
   else
     echo "Starting the Node.js server..."
     # Start the server in the background using nohup and save its PID
-    nohup node $NODE_SERVER_FILE > $LOG_FILE 2>&1 &
+    gosu normal-user nohup node $NODE_SERVER_FILE > $LOG_FILE 2>&1 &
     echo $! > "$PID_FILE"
     echo "Server started with PID $(cat $PID_FILE)."
   fi

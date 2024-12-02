@@ -60,10 +60,9 @@ function uploadAvatar($file, $user_id) {
 
     // File upload process
     $file_name = basename($file['name']);
-    $file_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $file_name);
-    $file_tmp = $file['tmp_name'];
-    
-    // Check for double file extension (i.e., multiple periods in the file name)
+    $file_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $file_name); // Sanitize the file name
+
+    // Validate double extensions
     if (substr_count($file_name, '.') > 1) {
         return "Invalid file name. Double extensions are not allowed.";
     }
@@ -77,12 +76,22 @@ function uploadAvatar($file, $user_id) {
         return "Invalid file type. Only JPG, JPEG, PNG, and GIF files are allowed.";
     }
 
+    // Check the MIME type of the file
+    $file_info = finfo_open(FILEINFO_MIME_TYPE); // Open fileinfo resource
+    $mime_type = finfo_file($file_info, $file['tmp_name']);
+    finfo_close($file_info);
+    
+    $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!in_array($mime_type, $allowed_mime_types)) {
+        return "Invalid file type. Only images (JPG, PNG, GIF) are allowed.";
+    }
+
     // Set new file name and path
     $new_file_name = 'avatar_' . $user_id . '.' . $file_ext;
     $file_path = $upload_dir . $new_file_name;
 
     // Move the uploaded file to the server
-    if (move_uploaded_file($file_tmp, $file_path)) {
+    if (move_uploaded_file($file['tmp_name'], $file_path)) {
         return $file_path;
     } else {
         return "Failed to upload avatar.";
@@ -207,19 +216,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label for="bio">Bio:</label>
                             <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio'], ENT_QUOTES, 'UTF-8') ?></textarea>
 
-                            <!-- Avatar Upload -->
-                            <label for="avatar">Change Avatar:</label>
-                            <input type="file" id="avatar" name="avatar" accept="image/*">
-                            <br/>
+                            <!-- Avatar -->
+                            <label for="avatar">Avatar:</label>
+                            <input type="file" name="avatar" accept="image/*">
 
-                            <!-- Submit Button -->
-                            <p>
-                                <button type="submit" class="w3-button w3-theme w3-padding">Update Profile</button>
-                            </p>
+                            <!-- Submit -->
+                            <input type="submit" value="Save Changes" class="w3-button w3-theme">
                         </form>
-                        <br/>
                     </div>
+
                 </div>
+
             </div>
         </div>
     </body>

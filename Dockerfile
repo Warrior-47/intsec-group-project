@@ -1,9 +1,17 @@
 FROM nharrand/passoire:latest
 
 RUN apt update && apt upgrade -y
+RUN apt install -y gosu
 
 # Updating application code
 COPY ./passoire /passoire
+
+# Installing necessary nodejs packages
+WORKDIR /passoire/crypto-helper
+
+RUN npm install
+
+WORKDIR /passoire
 
 # Hardening apache2 config
 COPY ./config/apache2.conf /etc/apache2/apache2.conf
