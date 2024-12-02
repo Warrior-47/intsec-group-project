@@ -7,8 +7,18 @@ if [[ -d /passoire/flags-enc ]]; then
 fi
 
 # Updating ownership and permissions of uploads and img folder
-chown -R www-data:www-data /passoire/web/uploads && chmod 750 /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
-chown -R www-data:www-data /passoire/web/img && chmod 750 /passoire/web/img && chmod 640 /passoire/web/img/*
+chown -R www-data:www-data /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
+chmod 640 /passoire/web/img/*
+
+# Updating permissions of passoire user home directory
+chown -R passoire /home/passoire && chmod 750 /home/passoire && chmod 640 /home/passoire/*
+
+# Removing admin user from server
+userdel -r admin
+
+# Removing removable flags
+rm /passoire/my_own_cryptographic_algorithm
+rm /passoire/web/flag_3
 
 # Start DB, web server and ssh server
 service mysql start
@@ -30,10 +40,12 @@ mysql -u root -e "FLUSH PRIVILEGES;"
 
 mysql -u root ${DB_NAME} < config/passoire.sql
 
-#password update for users
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Pr/BAMLvlCT2/7mgtUl1UoXgZw' WHERE id = 1;"
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$Hg9+2jHJl5UeIKdQ7O71wLNOag' WHERE id = 2;"
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$YlVOTlVtY3ZjamRDTTB4V2FVRkdlZw\$apaDdIrkUiI7crHkYNeftrKTAw' WHERE id = 4;"
+# Password update for users
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
+mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$eGtFYnZrRGFQc3RLT0tKNw\$o7qnNf5aZXO4EnAoB78jr8ksdw' WHERE id = 2;"
+
+# Removing admin user from DB
+mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
 
 # Updating avatar location for john_doe
 mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
@@ -43,7 +55,6 @@ rm /var/www/html/index.html
 echo "<?php header(\"Location: passoire/index.php\"); ?>" > /var/www/html/index.php
 
 # Link apache dir and our web dir
-ln -s /usr/share/phpmyadmin/ /var/www/html/phpmyadmin
 ln -s /passoire/web/ /var/www/html/passoire
 
 # Adapt to our ip
