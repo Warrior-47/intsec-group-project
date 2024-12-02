@@ -58,9 +58,6 @@ mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
 # Updating avatar location for john_doe
 mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
 
-#Updating files tabel to use the new encrypted file
-mysql -u root -e "UPDATE passoire.files SET path = 'uploads/encryptedFile' WHERE id = 2;"
-
 # Redirect querry from website root to our main page
 rm /var/www/html/index.html
 echo "<?php header(\"Location: passoire/index.php\"); ?>" > /var/www/html/index.php
