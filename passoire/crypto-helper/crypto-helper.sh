@@ -11,14 +11,17 @@ PID_FILE="/passoire/logs/crypto-helper.pid"
 # Check the first parameter
 if [ "$1" == "start" ]; then
   if [ -f "$PID_FILE" ]; then
-    echo "Server is already running. Use 'stop' first if you want to restart it."
-  else
+    PID=$(cat "$PID_FILE")
+    echo "Stopping the Node.js server with PID $PID..."
+    # Kill the server process
+    kill "$PID"
+    rm -f "$PID_FILE"
+  fi
     echo "Starting the Node.js server..."
     # Start the server in the background using nohup and save its PID
     gosu normal-user nohup node $NODE_SERVER_FILE > $LOG_FILE 2>&1 &
     echo $! > "$PID_FILE"
     echo "Server started with PID $(cat $PID_FILE)."
-  fi
 
 elif [ "$1" == "stop" ]; then
   if [ -f "$PID_FILE" ]; then
@@ -35,4 +38,3 @@ elif [ "$1" == "stop" ]; then
 else
   echo "Usage: $0 {start|stop}"
 fi
-

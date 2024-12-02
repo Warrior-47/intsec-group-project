@@ -37,47 +37,55 @@ DB_NAME="passoire"
 DB_USER="passoire"
 DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
 
-
-# Initialize database
-echo "Creating MySQL database and user..."
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
-mysql -u root -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
-#mysql -u root -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
-mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION;"
-mysql -u root -e "FLUSH PRIVILEGES;"
-
-mysql -u root ${DB_NAME} < config/passoire.sql
-
-# Password update for users
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
-mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$eGtFYnZrRGFQc3RLT0tKNw\$o7qnNf5aZXO4EnAoB78jr8ksdw' WHERE id = 2;"
-
-# Removing admin user from DB
-mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
-
-# Updating avatar location for john_doe
-mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
-
-# Redirect querry from website root to our main page
-rm /var/www/html/index.html
-echo "<?php header(\"Location: passoire/index.php\"); ?>" > /var/www/html/index.php
-
-# Link apache dir and our web dir
-ln -s /passoire/web/ /var/www/html/passoire
-
 # Adapt to our ip
 echo "127.0.0.1 db" >> /etc/hosts
 
+if ls /passoire/logs/initialized >/dev/null 2>&1; then
+	echo "Initialization has already been performed"
+else
+	# Initialize database
+	echo "Creating MySQL database and user..."
+	mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
+	mysql -u root -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
+	#mysql -u root -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
+	mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION;"
+	mysql -u root -e "FLUSH PRIVILEGES;"
+
+	mysql -u root ${DB_NAME} < config/passoire.sql
+
+	# Password update for users
+	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
+	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$eGtFYnZrRGFQc3RLT0tKNw\$o7qnNf5aZXO4EnAoB78jr8ksdw' WHERE id = 2;"
+
+	# Removing admin user from DB
+	mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
+
+	# Updating avatar location for john_doe
+	mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
+
+	# Redirect querry from website root to our main page
+	rm /var/www/html/index.html
+	echo "<?php header(\"Location: passoire/index.php\"); ?>" > /var/www/html/index.php
+
+	# Link apache dir and our web dir
+	ln -s /passoire/web/ /var/www/html/passoire
+
+	touch /passoire/logs/initialized
+fi
 
 
-if [ -z "$HOST" ]; then
+if [ -z "${HOST+x}" ] || [ -z "${HOST}" ]; then
   HOST=$(hostname -i)
 fi
 
 echo "Web server running at http://$HOST"
 
-sed -i "s/CONTAINER_IP/$HOST/g" /passoire/web/crypto.php
-sed -i "s/CONTAINER_IP/$HOST/g" /passoire/crypto-helper/server.js
+# Adapt to HOST variable regardless of past modifications.
+sed -E -i "s/^const host = \"(CONTAINER_IP|localhost|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\";$/const host = \"$HOST\";/" /passoire/crypto-helper/server.js
+sed -E -i "s@http://(CONTAINER_IP|localhost|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):3002@http://$HOST:3002@g" /passoire/web/crypto.php
+
+# Fix bug with DES encryption/decryption
+sed -i 's/ -provider legacy -provider default//g' /passoire/crypto-helper/server.js
 
 touch /passoire/logs/crypto-helper.log
 chown -R normal-user /passoire/logs
