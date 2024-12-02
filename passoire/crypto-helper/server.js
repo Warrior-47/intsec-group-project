@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 function sanitize(str){
-  return str.replace( /[";'\[\]{}()<>&/$|]*/g,"");
+  return str.replace( /[";'\[\]\{}()<>&$|]*/g,"");
 }
 
 app.use((req, res, next) => {
