@@ -20,6 +20,9 @@ chmod 640 /passoire/web/img/*
 # Updating permissions of passoire user home directory
 chown -R passoire /home/passoire && chmod 750 /home/passoire && chmod 640 /home/passoire/*
 
+# Updating permissions of /etc/environment
+chmod 640 /etc/environment
+
 # Removing admin user from server
 userdel -r admin
 
@@ -28,14 +31,22 @@ rm /passoire/my_own_cryptographic_algorithm
 rm /passoire/web/flag_3
 mv /passoire/web/uploads/encryptedFile /passoire/web/uploads/encrypted
 
-# Start DB, web server and ssh server
-service mysql start
-service ssh start
-service apache2 start
+
+mv /passoire/config/db_pw_new /passoire/config/db_pw
 
 DB_NAME="passoire"
 DB_USER="passoire"
 DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
+
+rm /passoire/config/db_pw
+
+echo "export DB_PASS=$DB_PASSWORD" >> /etc/environment
+echo ". /etc/environment" >> /etc/apache2/envvars
+
+# Start DB, web server and ssh server
+service mysql start
+service ssh start
+service apache2 start
 
 # Adapt to our ip
 echo "127.0.0.1 db" >> /etc/hosts
@@ -52,6 +63,8 @@ else
 	mysql -u root -e "FLUSH PRIVILEGES;"
 
 	mysql -u root ${DB_NAME} < config/passoire.sql
+
+	rm /passoire/config/passoire.sql
 
 	# Password update for users
 	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"

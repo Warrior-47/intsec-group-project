@@ -3,7 +3,7 @@
 $host = 'db';
 $dbname = 'passoire';
 $username = 'passoire';
-$password = 'hotdog';
+$password = getenv('DB_PASS');
 
 try {
     $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
