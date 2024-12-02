@@ -2,21 +2,20 @@
 // Include database connection and start session
 include 'db_connect.php';
 
-// Start secure session
-session_start();
-
-// Regenerate session ID to prevent session fixation attacks
-
-
-// Set secure session cookie parameters
+// Set secure session cookie parameters before starting the session
 $cookie_params = session_get_cookie_params();
 session_set_cookie_params([
     'lifetime' => $cookie_params['lifetime'],
     'path' => $cookie_params['path'],
     'domain' => $cookie_params['domain'],
-    'httponly' => true,                  
-    'samesite' => 'Strict'               
+    'httponly' => true,
+    'samesite' => 'Strict'
 ]);
+
+// Start secure session
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -35,31 +34,21 @@ if (!is_numeric($user_id)) {
 }
 
 // Fetch current user info from the database
-/*$stmt = $pdo->prepare("
+$stmt = $conn->prepare("
     SELECT u.login, u.email, ui.birthdate, ui.location, ui.bio, ui.avatar 
     FROM users u
     LEFT JOIN userinfos ui ON u.id = ui.userid
-    WHERE u.id = \"" . $user_id . "\"
+    WHERE u.id = ?
 ");
-$stmt->execute(['user_id' => $user_id]);
-$user = $stmt->fetch();*/
-
-
-$sql = "
-    SELECT u.login, u.email, ui.birthdate, ui.location, ui.bio, ui.avatar 
-    FROM users u
-    LEFT JOIN userinfos ui ON u.id = ui.userid
-    WHERE u.id = \"" . $user_id . "\"
-";
-$result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-                // Fetch the first row of results into an array
-                $user = $result->fetch_assoc();
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);  // Bind the user ID parameter (i = integer)
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($result) {
+    $user = $result;
 } else {
-                echo "No results found.";
+    echo "No results found.";
+    exit();
 }
-
 
 // Function to handle avatar upload
 function uploadAvatar($file, $user_id) {
@@ -99,9 +88,6 @@ function uploadAvatar($file, $user_id) {
         return "Failed to upload avatar.";
     }
 }
-    
-
-
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -109,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $birthdate = htmlspecialchars($_POST['birthdate'], ENT_QUOTES, 'UTF-8'); 
     $location = htmlspecialchars($_POST['location'], ENT_QUOTES, 'UTF-8'); 
     $bio = htmlspecialchars($_POST['bio'], ENT_QUOTES, 'UTF-8');
-
+    $avatar_path = $user['avatar']; // Keep existing avatar by default
 
     // Check if an avatar file was uploaded
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
@@ -121,127 +107,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Update the users table (email)
-    // $sql = "UPDATE users SET email = '" . $email . "' WHERE id = " . $user_id;
-    //             $result = $conn->query($sql);
+    // Securely update the users table (email)
     $stmt = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
-    $stmt->bind_param("si", $email, $user_id);
+    $stmt->bindParam(1, $email, PDO::PARAM_STR);  // Bind email (string)
+    $stmt->bindParam(2, $user_id, PDO::PARAM_INT);  // Bind user_id (integer)
     $stmt->execute();
-   
 
-
-
-    // Update the userinfos table (birthdate, location, bio, avatar)
-    
+    // Securely update or insert into the userinfos table (birthdate, location, bio, avatar)
     $stmt = $conn->prepare("
-    INSERT INTO userinfos (userid, birthdate, location, bio, avatar)
-    VALUES (?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE birthdate = VALUES(birthdate), location = VALUES(location), bio = VALUES(bio), avatar = VALUES(avatar)
+        INSERT INTO userinfos (userid, birthdate, location, bio, avatar)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE birthdate = VALUES(birthdate), location = VALUES(location), bio = VALUES(bio), avatar = VALUES(avatar)
     ");
-    $stmt->bind_param("issss", $user_id, $birthdate, $location, $bio, $avatar_path);
+    $stmt->bindParam(1, $user_id, PDO::PARAM_INT);  // Bind user_id (integer)
+    $stmt->bindParam(2, $birthdate, PDO::PARAM_STR);  // Bind birthdate (string)
+    $stmt->bindParam(3, $location, PDO::PARAM_STR);  // Bind location (string)
+    $stmt->bindParam(4, $bio, PDO::PARAM_STR);  // Bind bio (string)
+    $stmt->bindParam(5, $avatar_path, PDO::PARAM_STR);  // Bind avatar (string)
     $stmt->execute();
-
 }
 ?>
 
 <!DOCTYPE html>
 <html>
-        <head>
-                <title>Passoire: A simple file hosting server</title>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link rel="stylesheet" href="./style/w3.css">
-                <link rel="stylesheet" href="./style/w3-theme-blue-grey.css">
-                <link rel="stylesheet" href="./style/css/fontawesome.css">
-                <link href="./style/css/brands.css" rel="stylesheet" />
-                <link href="./style/css/solid.css" rel="stylesheet" />
-                <style>
-                        html, body, h1, h2, h3, h4, h5 {font-family: "Open Sans", sans-serif}
-                        .error { color: red; }
-      .success { color: green; }
-      form {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="date"],
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        img.avatar {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-            border-radius: 50%;
-        }
-                </style>
-        </head>
-        <body class="w3-theme-l5">
+    <head>
+        <title>Passoire: A simple file hosting server</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="./style/w3.css">
+        <link rel="stylesheet" href="./style/w3-theme-blue-grey.css">
+        <link rel="stylesheet" href="./style/css/fontawesome.css">
+        <link href="./style/css/brands.css" rel="stylesheet" />
+        <link href="./style/css/solid.css" rel="stylesheet" />
+        <style>
+            html, body, h1, h2, h3, h4, h5 {font-family: "Open Sans", sans-serif}
+            .error { color: red; }
+            .success { color: green; }
+            form {
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            label {
+                display: block;
+                margin-bottom: 10px;
+            }
+            input[type="text"],
+            input[type="email"],
+            input[type="date"],
+            textarea {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 20px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            img.avatar {
+                max-width: 150px;
+                height: auto;
+                margin-bottom: 20px;
+                border-radius: 50%;
+            }
+        </style>
+    </head>
+    <body class="w3-theme-l5">
 
-                <?php include 'navbar.php'; ?>
+        <?php include 'navbar.php'; ?>
 
+        <!-- Page Container -->
+        <div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">
+            <div class="w3-col m12">
 
+                <div class="w3-card w3-round">
+                    <div class="w3-container w3-center center-c w3-white">
+                        <h1>User Settings</h1>
+                    </div>
 
-                <!-- Page Container -->
-                <div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">
-                        <div class="w3-col m12">
+                    <div class="w3-container w3-center center-c w3-white w3-margin-bottom w3-padding-bottom">
 
+                        <form method="POST" action="settings.php" enctype="multipart/form-data">
+                            <!-- Display current avatar -->
+                            <?php if ($user['avatar']): ?>
+                                <img src="<?= htmlspecialchars($user['avatar'], ENT_QUOTES, 'UTF-8') ?>" alt="Avatar" class="avatar">
+                            <?php endif; ?>
 
-                                <div class="w3-card w3-round">
-                                        <div class="w3-container w3-center center-c w3-white">
-                                <h1>User Settings</h1>
-                      </div>
+                            <!-- Email -->
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') ?>" required>
 
+                            <!-- Birthdate -->
+                            <label for="birthdate">Birth Date:</label>
+                            <input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate'], ENT_QUOTES, 'UTF-8') ?>" required>
 
-                                        <div class="w3-container w3-center center-c w3-white  w3-margin-bottom w3-padding-bottom">
+                            <!-- Location -->
+                            <label for="location">Location:</label>
+                            <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location'], ENT_QUOTES, 'UTF-8') ?>">
 
-                                                <form method="POST" action="settings.php" enctype="multipart/form-data">
-                                                                <!-- Display current avatar -->
-                                                                <?php if ($user['avatar']): ?>
-                                                                    <img src="<?= htmlspecialchars($user['avatar'], ENT_QUOTES, 'UTF-8') ?>" alt="Avatar" class="avatar">
-                                                                <?php endif; ?>
+                            <!-- Bio -->
+                            <label for="bio">Bio:</label>
+                            <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio'], ENT_QUOTES, 'UTF-8') ?></textarea>
 
-                                                                <!-- Email -->
-                                                                <!-- Email -->
-                                                                <label for="email">Email:</label>
-                                                                <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') ?>" required>
+                            <!-- Avatar Upload -->
+                            <label for="avatar">Change Avatar:</label>
+                            <input type="file" id="avatar" name="avatar" accept="image/*">
+                            <br/>
 
-                                                                 <!-- Birthdate -->
-                                                                 <label for="birthdate">Birth Date:</label>
-                                                                 <input type="date" id="birthdate" name="birthdate" value="<?= htmlspecialchars($user['birthdate'], ENT_QUOTES, 'UTF-8') ?>" required>
-
-                                                                 <!-- Location -->
-                                                                 <label for="location">Location:</label>
-                                                                 <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location'], ENT_QUOTES, 'UTF-8') ?>">
-
-                                                                <!-- Bio -->
-                                                                <label for="bio">Bio:</label>
-                                                                <textarea id="bio" name="bio" rows="4"><?= htmlspecialchars($user['bio'], ENT_QUOTES, 'UTF-8') ?></textarea>
-
-
-                                                                <!-- Avatar Upload -->
-                                                                <label for="avatar">Change Avatar:</label>
-                                                                <input type="file" id="avatar" name="avatar" accept="image/*">
-                                                                <br/>
-
-                                                                <!-- Submit Button -->
-                                                                <p>
-                                                                        <button type="submit" class="w3-button w3-theme w3-padding">Update Profile</button>
-                                                                </p>
-                                                </form>
-                                                                <br/>
-                        </div>
+                            <!-- Submit Button -->
+                            <p>
+                                <button type="submit" class="w3-button w3-theme w3-padding">Update Profile</button>
+                            </p>
+                        </form>
+                        <br/>
+                    </div>
                 </div>
+            </div>
         </div>
-</body>
+    </body>
 </html>
