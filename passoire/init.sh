@@ -40,7 +40,7 @@ DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
 # Adapt to our ip
 echo "127.0.0.1 db" >> /etc/hosts
 
-if ls /passoire/logs/initialized >/dev/null 2>&1; then
+if [ -f "/passoire/logs/initialized" ]; then
 	echo "Initialization has already been performed"
 else
 	# Initialize database
