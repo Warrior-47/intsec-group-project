@@ -26,7 +26,7 @@ userdel -r admin
 # Removing removable flags
 rm /passoire/my_own_cryptographic_algorithm
 rm /passoire/web/flag_3
-rm /passoire/web/uploads/encrypted
+mv /passoire/web/uploads/encryptedFile /passoire/web/uploads/encrypted
 
 # Start DB, web server and ssh server
 service mysql start
