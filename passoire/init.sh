@@ -6,6 +6,9 @@ if [[ -d /passoire/flags-enc ]]; then
 	/passoire/flags/init.sh
 fi
 
+# Restricting permissions on secret files
+chmod 600 /passoire/config/db_pw_new /passoire/config/passoire.sql
+
 # Adding system user with minimal permissions for apps that don't require permissions
 useradd --system --no-create-home --shell /usr/sbin/nologin normal-user
 
@@ -21,6 +24,9 @@ chmod 640 /passoire/web/img/*
 # Updating permissions of passoire user home directory
 chown -R passoire /home/passoire && chmod 750 /home/passoire && chmod 640 /home/passoire/*
 
+# Updating permissions of /etc/environment
+chmod 640 /etc/environment
+
 # Removing admin user from server
 userdel -r admin
 
@@ -29,14 +35,23 @@ rm /passoire/my_own_cryptographic_algorithm
 rm /passoire/web/flag_3
 mv /passoire/web/uploads/encryptedFile /passoire/web/uploads/encrypted
 
-# Start DB, web server and ssh server
-service mysql start
-service ssh start
-service apache2 start
+
+mv /passoire/config/db_pw_new /passoire/config/db_pw
 
 DB_NAME="passoire"
 DB_USER="passoire"
 DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
+ROOT_PASSWORD=$(tail -n 1 /passoire/config/db_pw)
+
+rm /passoire/config/db_pw
+
+echo "export DB_PASS=$DB_PASSWORD" >> /etc/environment
+echo ". /etc/environment" >> /etc/apache2/envvars
+
+# Start DB, web server and ssh server
+service mysql start
+service ssh start
+service apache2 start
 
 # Adapt to our ip
 echo "127.0.0.1 db" >> /etc/hosts
@@ -48,11 +63,18 @@ else
 	echo "Creating MySQL database and user..."
 	mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 	mysql -u root -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
-	#mysql -u root -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
-	mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION;"
-	mysql -u root -e "FLUSH PRIVILEGES;"
+	mysql -u root -e "GRANT INSERT, SELECT, UPDATE, DELETE ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
 
 	mysql -u root ${DB_NAME} < config/passoire.sql
+
+	rm /passoire/config/passoire.sql
+
+	# Enabling encryption at rest for passoire database
+	mysql -u root -e "ALTER TABLE passoire.users ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.files ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.messages ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.userinfos ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.links ENCRYPTION='Y';"
 
 	# Password update for users
 	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
@@ -63,6 +85,9 @@ else
 
 	# Updating avatar location for john_doe
 	mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
+
+	# Updating root password
+	mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH 'caching_sha2_password' BY '${ROOT_PASSWORD}';FLUSH PRIVILEGES;"
 
 	# Redirect querry from website root to our main page
 	rm /var/www/html/index.html
