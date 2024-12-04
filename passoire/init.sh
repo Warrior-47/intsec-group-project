@@ -10,6 +10,7 @@ fi
 useradd --system --no-create-home --shell /usr/sbin/nologin normal-user
 
 # Changing ownership and permissions of crypto-helper server to normal-user
+chown normal-user /passoire/crypto-helper
 chown -R normal-user /passoire/crypto-helper/{node_modules,server.js}
 chmod 750 /passoire/crypto-helper/*
 
