@@ -69,6 +69,13 @@ else
 
 	rm /passoire/config/passoire.sql
 
+	# Enabling encryption at rest for passoire database
+	mysql -u root -e "ALTER TABLE passoire.users ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.files ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.messages ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.userinfos ENCRYPTION='Y';"
+	mysql -u root -e "ALTER TABLE passoire.links ENCRYPTION='Y';"
+
 	# Password update for users
 	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
 	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$eGtFYnZrRGFQc3RLT0tKNw\$o7qnNf5aZXO4EnAoB78jr8ksdw' WHERE id = 2;"

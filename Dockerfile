@@ -19,6 +19,10 @@ COPY ./config/apache2.conf /etc/apache2/apache2.conf
 # Hardening SSH config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && mkdir /home/passoire/.ssh
 
+# Hardening mysql config
+COPY ./config/mysql.cnf /etc/mysql/mysql.cnf
+RUN chown mysql:mysql /etc/mysql/mysql.cnf && chmod 640 /etc/mysql/mysql.cnf
+
 # Ensuring only passoire user can ssh with only key based auth
 COPY ./authorized_keys /home/passoire/.ssh/authorized_keys
 
