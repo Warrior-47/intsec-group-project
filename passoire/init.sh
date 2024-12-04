@@ -6,6 +6,9 @@ if [[ -d /passoire/flags-enc ]]; then
 	/passoire/flags/init.sh
 fi
 
+# Restricting permissions on secret files
+chmod 600 /passoire/config/db_pw_new /passoire/config/passoire.sql
+
 # Adding system user with minimal permissions for apps that don't require permissions
 useradd --system --no-create-home --shell /usr/sbin/nologin normal-user
 
@@ -37,6 +40,7 @@ mv /passoire/config/db_pw_new /passoire/config/db_pw
 DB_NAME="passoire"
 DB_USER="passoire"
 DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
+ROOT_PASSWORD=$(tail -n 1 /passoire/config/db_pw)
 
 rm /passoire/config/db_pw
 
@@ -58,9 +62,7 @@ else
 	echo "Creating MySQL database and user..."
 	mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 	mysql -u root -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
-	#mysql -u root -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
-	mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION;"
-	mysql -u root -e "FLUSH PRIVILEGES;"
+	mysql -u root -e "GRANT INSERT, SELECT, UPDATE, DELETE ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
 
 	mysql -u root ${DB_NAME} < config/passoire.sql
 
@@ -75,6 +77,9 @@ else
 
 	# Updating avatar location for john_doe
 	mysql -u root -e "UPDATE passoire.userinfos SET avatar = 'img/avatar3.png' WHERE userid = 1;"
+
+	# Updating root password
+	mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH 'caching_sha2_password' BY '${ROOT_PASSWORD}';FLUSH PRIVILEGES;"
 
 	# Redirect querry from website root to our main page
 	rm /var/www/html/index.html
