@@ -139,7 +139,7 @@ $totalPages = ceil($totalMessages / $limit);
     <span class="w3-right w3-opacity"><?php echo htmlspecialchars($msg['date']); ?></span>
     <h4><?php echo htmlspecialchars($msg['login']); ?></h4><br>
     <hr class="w3-clear">
-    <p><?php echo htmlspecialchars($msg['content']); ?></p>
+    <p><?php echo strip_tags($msg['content'], '<a><b><i><strong>'); ?></p>
 </div>
 <?php endforeach; ?>
 
