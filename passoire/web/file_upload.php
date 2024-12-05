@@ -50,13 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         // Get the last inserted file ID
                         $file_id = $conn->lastInsertId();
 
+                        $salt = random_int(100000000000, 999999999999);
                         // Generate the hash for the link table
-                        $hash = sha1($ownerid . basename($file['name']));
+                        $hash = sha1($ownerid . $salt. basename($file['name']));
 
                         // Insert the file link into the links table using prepared statements
-                        $stmt2 = $conn->prepare("INSERT INTO links (fileid, secret, hash) VALUES (:fileid, 0, :hash)");
+                        $stmt2 = $conn->prepare("INSERT INTO links (fileid, secret, hash) VALUES (:fileid, :secret, :hash)");
                         $stmt2->bindParam(':fileid', $file_id, PDO::PARAM_INT);
                         $stmt2->bindParam(':hash', $hash, PDO::PARAM_STR);
+                        $stmt2->bindParam(':secret', $salt, PDO::PARAM_INT);
                         $stmt2->execute();
 
                         $message = "File uploaded successfully!";
