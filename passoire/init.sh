@@ -79,6 +79,11 @@ else
 	# Password update for users
 	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$czdSUHFtanFTTnlGdUMxRA\$X+rAIVERceWDTVR1ywjsdLwRjA' WHERE id = 1;"
 	mysql -u root -e "UPDATE passoire.users SET pwhash = '\$argon2i\$v=19\$m=65536,t=4,p=1\$eGtFYnZrRGFQc3RLT0tKNw\$o7qnNf5aZXO4EnAoB78jr8ksdw' WHERE id = 2;"
+	
+	#Update existing file links
+	mysql -u root -e "UPDATE passoire.links SET hash = '30590d2d421dff125e2d4345d39ed36984280c65' WHERE fileid = 1;"
+	mysql -u root -e "UPDATE passoire.links SET hash = 'fca2bf7855934e69936b49acb9a45fa4a3dcb9d5' WHERE fileid = 2;"
+	mysql -u root -e "UPDATE passoire.links SET hash = 'e73f35f8c38dc38109d0a16e99d015969a8cfe89' WHERE fileid = 3;"
 
 	# Removing admin user from DB
 	mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
