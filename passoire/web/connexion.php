@@ -28,7 +28,7 @@ if (!isset($_SESSION['ip_attempts'][$ip])) {
 // Check if the user is locked out based on IP rate limiting
 if ($_SESSION['ip_attempts'][$ip]['attempts'] >= $maxAttempts) {
     if ($timeNow - $_SESSION['ip_attempts'][$ip]['last_attempt'] < $lockoutTime) {
-        $error = 'Too many failed attempts from your IP. Please try again later.';
+        $error = 'Too many failed attempts. Please try again later.';
     } else {
         // Reset the count after lockout time
         $_SESSION['ip_attempts'][$ip] = ['attempts' => 0, 'last_attempt' => $timeNow];
