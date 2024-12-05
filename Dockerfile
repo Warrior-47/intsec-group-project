@@ -30,4 +30,4 @@ COPY ./authorized_keys /home/passoire/.ssh/authorized_keys
 RUN chown -R www-data /passoire/web
 RUN chmod -R 750 /passoire/web
 
-CMD ["/passoire/init.sh"]
+ENTRYPOINT ["/passoire/init.sh"]
