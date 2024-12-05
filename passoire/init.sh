@@ -84,6 +84,7 @@ else
 	mysql -u root -e "UPDATE passoire.links SET hash = '30590d2d421dff125e2d4345d39ed36984280c65' WHERE fileid = 1;"
 	mysql -u root -e "UPDATE passoire.links SET hash = 'fca2bf7855934e69936b49acb9a45fa4a3dcb9d5' WHERE fileid = 2;"
 	mysql -u root -e "UPDATE passoire.links SET hash = 'e73f35f8c38dc38109d0a16e99d015969a8cfe89' WHERE fileid = 3;"
+	mysql -u root -e "UPDATE passoire.messages SET content = 'Here is a file for you, it\'s encrypted with an algorithm of my own invention. I sent you the key by text message. Here is the <a href=\"link.php?file=fca2bf7855934e69936b49acb9a45fa4a3dcb9d5\">link </a>.' WHERE id = 45;"	
 
 	# Removing admin user from DB
 	mysql -u root -e "DELETE FROM passoire.users WHERE id = 4;"
