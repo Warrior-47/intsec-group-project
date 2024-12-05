@@ -15,6 +15,8 @@ WORKDIR /passoire
 
 # Hardening apache2 config
 COPY ./config/apache2.conf /etc/apache2/apache2.conf
+RUN sed -i 's/^ServerTokens OS/ServerTokens Prod/' /etc/apache2/conf-available/security.conf && \
+    sed -i 's/^ServerSignature On/ServerSignature Off/' /etc/apache2/conf-available/security.conf
 
 # Hardening SSH config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && mkdir /home/passoire/.ssh
