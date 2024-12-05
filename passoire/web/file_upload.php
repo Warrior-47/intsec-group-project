@@ -13,43 +13,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $ownerid = $_SESSION['user_id'];
         $file = $_FILES['file'];
 
-        // Handle file upload
-        $uploadDir = 'uploads/';
-        $uploadFile = $uploadDir . basename($file['name']);
-
-        // Check if the directory exists, if not create it
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0750, true);
-        }
-
-        if (move_uploaded_file($file['tmp_name'], $uploadFile)) {
-            // Save file info to database using prepared statements
-
-            // Prepare SQL statement to insert file info
-            $stmt = $conn->prepare("INSERT INTO files (type, ownerid, date, path) VALUES (:type, :ownerid, NOW(), :path)");
-            $stmt->bindParam(':type', $file['type'], PDO::PARAM_STR);
-            $stmt->bindParam(':ownerid', $ownerid, PDO::PARAM_INT);
-            $stmt->bindParam(':path', $uploadFile, PDO::PARAM_STR);
-            
-            if ($stmt->execute()) {
-                // Get the last inserted file ID
-                $file_id = $conn->lastInsertId();
-
-                // Generate the hash for the link table
-                $hash = sha1($ownerid . basename($file['name']));
-
-                // Insert the file link into the links table using prepared statements
-                $stmt2 = $conn->prepare("INSERT INTO links (fileid, secret, hash) VALUES (:fileid, 0, :hash)");
-                $stmt2->bindParam(':fileid', $file_id, PDO::PARAM_INT);
-                $stmt2->bindParam(':hash', $hash, PDO::PARAM_STR);
-                $stmt2->execute();
-
-                $message = "File uploaded successfully!";
-            } else {
-                $error = "Error uploading the file.";
-            }
+        // Allowed file types
+        $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      
+        // Validate file type
+        if (!in_array($file['type'], $allowedTypes)) {
+            $error = "Invalid file type. Only JPG, PNG, and PDF files are allowed.";
         } else {
-            $error = "Error moving the uploaded file.";
+            // Prevent double extension attacks
+            $fileName = $file['name'];
+            $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+            $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+
+            if (strpos($baseName, '.') !== false || !preg_match('/^[a-zA-Z0-9-_]+$/', $baseName)) {
+                $error = "Invalid file name.";
+            } else {
+                // Handle file upload
+                $uploadDir = 'uploads/';
+                $uploadFile = $uploadDir . basename($file['name']);
+
+                // Check if the directory exists, if not create it
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0750, true);
+                }
+
+                if (move_uploaded_file($file['tmp_name'], $uploadFile)) {
+                    // Save file info to database using prepared statements
+
+                    // Prepare SQL statement to insert file info
+                    $stmt = $conn->prepare("INSERT INTO files (type, ownerid, date, path) VALUES (:type, :ownerid, NOW(), :path)");
+                    $stmt->bindParam(':type', $file['type'], PDO::PARAM_STR);
+                    $stmt->bindParam(':ownerid', $ownerid, PDO::PARAM_INT);
+                    $stmt->bindParam(':path', $uploadFile, PDO::PARAM_STR);
+
+                    if ($stmt->execute()) {
+                        // Get the last inserted file ID
+                        $file_id = $conn->lastInsertId();
+
+                        // Generate the hash for the link table
+                        $hash = sha1($ownerid . basename($file['name']));
+
+                        // Insert the file link into the links table using prepared statements
+                        $stmt2 = $conn->prepare("INSERT INTO links (fileid, secret, hash) VALUES (:fileid, 0, :hash)");
+                        $stmt2->bindParam(':fileid', $file_id, PDO::PARAM_INT);
+                        $stmt2->bindParam(':hash', $hash, PDO::PARAM_STR);
+                        $stmt2->execute();
+
+                        $message = "File uploaded successfully!";
+                    } else {
+                        $error = "Error uploading the file.";
+                    }
+                } else {
+                    $error = "Error moving the uploaded file.";
+                }
+            }
         }
     } else {
         $error = "Please log in to upload files.";
