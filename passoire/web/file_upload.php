@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Allowed file types
         $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-
+      
         // Validate file type
         if (!in_array($file['type'], $allowedTypes)) {
             $error = "Invalid file type. Only JPG, PNG, and PDF files are allowed.";
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Check if the directory exists, if not create it
                 if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
+                    mkdir($uploadDir, 0750, true);
                 }
 
                 if (move_uploaded_file($file['tmp_name'], $uploadFile)) {
