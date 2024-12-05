@@ -1,7 +1,7 @@
 FROM nharrand/passoire:latest
 
 RUN apt update && apt upgrade -y
-RUN apt install -y gosu
+RUN apt install -y sudo gosu
 
 # Updating application code
 COPY ./passoire /passoire
@@ -15,6 +15,8 @@ WORKDIR /passoire
 
 # Hardening apache2 config
 COPY ./config/apache2.conf /etc/apache2/apache2.conf
+RUN sed -i 's/^ServerTokens OS/ServerTokens Prod/' /etc/apache2/conf-available/security.conf && \
+    sed -i 's/^ServerSignature On/ServerSignature Off/' /etc/apache2/conf-available/security.conf
 
 # Hardening SSH config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && mkdir /home/passoire/.ssh
@@ -30,4 +32,4 @@ COPY ./authorized_keys /home/passoire/.ssh/authorized_keys
 RUN chown -R www-data /passoire/web
 RUN chmod -R 750 /passoire/web
 
-CMD ["/passoire/init.sh"]
+ENTRYPOINT ["/passoire/init.sh"]
