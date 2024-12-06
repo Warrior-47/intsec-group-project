@@ -6,48 +6,6 @@ if [[ -d /passoire/flags-enc ]]; then
 	/passoire/flags/init.sh
 fi
 
-# Restricting permissions on secret files
-chmod 600 /passoire/config/db_pw_new /passoire/config/passoire.sql
-
-# Adding system user with minimal permissions for apps that don't require permissions
-useradd --system --no-create-home --shell /usr/sbin/nologin normal-user
-
-# Changing ownership and permissions of crypto-helper server to normal-user
-chown normal-user /passoire/crypto-helper
-chown -R normal-user /passoire/crypto-helper/{node_modules,server.js}
-chmod 750 /passoire/crypto-helper/*
-
-# Updating ownership and permissions of uploads and img folder
-chown -R www-data:www-data /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
-chmod 640 /passoire/web/img/*
-
-# Updating permissions of passoire user home directory
-chown -R passoire /home/passoire && chmod 750 /home/passoire && chmod 640 /home/passoire/*
-
-# Updating permissions of /etc/environment
-chmod 640 /etc/environment
-
-# Removing admin user from server
-userdel -r admin
-
-# Removing removable flags
-rm /passoire/my_own_cryptographic_algorithm
-rm /passoire/web/flag_3
-mv /passoire/web/uploads/encryptedFile /passoire/web/uploads/encrypted
-
-
-mv /passoire/config/db_pw_new /passoire/config/db_pw
-
-DB_NAME="passoire"
-DB_USER="passoire"
-DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
-ROOT_PASSWORD=$(tail -n 1 /passoire/config/db_pw)
-
-rm /passoire/config/db_pw
-
-echo "export DB_PASS=$DB_PASSWORD" >> /etc/environment
-echo ". /etc/environment" >> /etc/apache2/envvars
-
 # Start DB, web server and ssh server
 service mysql start
 service ssh start
@@ -59,6 +17,49 @@ echo "127.0.0.1 db" >> /etc/hosts
 if [ -f "/passoire/logs/initialized" ]; then
 	echo "Initialization has already been performed"
 else
+	# Restricting permissions on secret files
+	chmod 600 /passoire/config/db_pw_new /passoire/config/passoire.sql
+
+	# Adding system user with minimal permissions for apps that don't require permissions
+	useradd --system --no-create-home --shell /usr/sbin/nologin normal-user
+
+	# Changing ownership and permissions of crypto-helper server to normal-user
+	chown normal-user /passoire/crypto-helper
+	chown -R normal-user /passoire/crypto-helper/{node_modules,server.js}
+	chmod 750 /passoire/crypto-helper/*
+
+	# Updating ownership and permissions of uploads and img folder
+	chown -R www-data:www-data /passoire/web/uploads && chmod 640 /passoire/web/uploads/*
+	chmod 640 /passoire/web/img/*
+
+	# Updating permissions of passoire user home directory
+	chown -R passoire /home/passoire && chmod 750 /home/passoire && chmod 640 /home/passoire/*
+
+	# Updating permissions of /etc/environment
+	chmod 640 /etc/environment
+
+	# Removing admin user from server
+	userdel -r admin
+
+	# Removing removable flags
+	rm /passoire/my_own_cryptographic_algorithm
+	rm /passoire/web/flag_3
+	mv /passoire/web/uploads/encryptedFile /passoire/web/uploads/encrypted
+	rm /passoire/logs/init.log
+
+
+	mv /passoire/config/db_pw_new /passoire/config/db_pw
+
+	DB_NAME="passoire"
+	DB_USER="passoire"
+	DB_PASSWORD=$(head -n 1 /passoire/config/db_pw)
+	ROOT_PASSWORD=$(tail -n 1 /passoire/config/db_pw)
+
+	rm /passoire/config/db_pw
+
+	echo "export DB_PASS=$DB_PASSWORD" >> /etc/environment
+	echo ". /etc/environment" >> /etc/apache2/envvars
+
 	# Initialize database
 	echo "Creating MySQL database and user..."
 	mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
@@ -101,6 +102,9 @@ else
 
 	# Link apache dir and our web dir
 	ln -s /passoire/web/ /var/www/html/passoire
+
+	service ssh restart
+	service apache2 restart
 
 	touch /passoire/logs/initialized
 fi
