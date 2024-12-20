@@ -48,18 +48,47 @@ def bruteforce(idx_to_brute: int, key: bytearray, cypher_text: bytearray):
 
 
 if __name__ == '__main__':
-    known_plaintext = b'flag_'
+    full_d = input("Full decrypt? (y/n): ")
 
-    with open('encrypted', 'rb') as f:
-        cypher_text = f.read()
-    
-    for i in range(1, 15):
-        print(f"Trying with key size: {i}")
-        key = known_plaintext_attack(cypher_text, known_plaintext, i)
+    if full_d == 'n':
+        known_plaintext = b'flag_8 is'
 
-        print(f'Using key {key} to decrypt.')
+        with open('encrypted', 'rb') as f:
+            cypher_text = f.read()
+        
+        for i in range(1, 15):
+            print(f"Trying with key size: {i}")
+            key = known_plaintext_attack(cypher_text, known_plaintext, i)
+
+            print(f'Using key {key} to decrypt.\n')
+            plaintext = decrypt(cypher_text, key)
+
+            os.makedirs('d_files', exist_ok=True)
+            with open(f'd_files/decrypted_{i}', 'wb') as f:
+                f.write(plaintext)
+    else:
+        key_start = input("key starting value: ")
+        cypher = input("cypher text: ")
+        plain = input("known plaintext: ")
+
+        # converting inputs to bytearrays to the same variable
+        key_start = bytearray(key_start, 'utf-8')
+        cypher = bytearray(cypher, 'utf-8')
+        plain = bytearray(plain, 'utf-8')
+
+        key_end = bytearray([ cypher[i] ^ plain[i] for i in range(len(plain)) ])
+
+        key = key_start + key_end
+
+        with open('encrypted', 'rb') as f:
+            cypher_text = f.read()
+
+        # key = b'880.130$\n '
+        print(f'Using key {key} to decrypt.\n')
         plaintext = decrypt(cypher_text, key)
 
         os.makedirs('d_files', exist_ok=True)
-        with open(f'd_files/decrypted_{i}', 'wb') as f:
+        with open(f'd_files/final_decrypted', 'wb') as f:
             f.write(plaintext)
+
+
