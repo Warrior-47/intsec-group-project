@@ -1,6 +1,6 @@
 # INTSEC: Hardening Passoire Web Application
 
-This is a group project for the INTSEC course at Stockholm University. The idea of the project is to harden a web application full of vulnerabilities such that other groups are able to capture the flags that reside inside 
+This is a group project for the INTSEC course at Stockholm University. The idea of the project is to harden a web application full of vulnerabilities such that other groups are not able to capture the flags that reside inside.
 
 ## Phases
 There were three phases for the project:
