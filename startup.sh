@@ -5,7 +5,7 @@
 # and focus more on the project itself.
 
 DOCKER_IMAGE="samuelegarzon/group39_intsec:latest"
-GROUP_SECRET="<secret_sent_by_prof"
+GROUP_SECRET="<secret_sent_by_prof>"
 CONTAINER_NAME="passoire"
 
 echo -e "\nChecking if container already exists..."
