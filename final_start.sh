@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+# The point of this script is to give a convenient way to the rest of the group to start the final container
+# without having to worry about the details of the Docker commands.
+
 DOCKER_IMAGE="samuelegarzon/group39_intsec:latest"
 CONTAINER_NAME="passoire-final"
 

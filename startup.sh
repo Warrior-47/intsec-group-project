@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# The point of this script is to give a convenient way to the rest of the group to start the project container
+# without having to worry about the details of the Docker commands. This is done to save time and avoid errors
+# and focus more on the project itself.
+
 DOCKER_IMAGE="samuelegarzon/group39_intsec:latest"
-GROUP_SECRET="4d852eea1a2dce9ea7f1222f56e3b2e0c9b05224"
+GROUP_SECRET="<secret_sent_by_prof>"
 CONTAINER_NAME="passoire"
 
 echo -e "\nChecking if container already exists..."
